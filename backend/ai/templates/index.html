@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="csrf-token" content="{{ csrf_token }}"> <!-- Añadido el meta con el token CSRF -->
+  <title>Procesamiento de Problemas Matemáticos</title>
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      text-align: center;
+      margin-top: 50px;
+      background-color: #f4f4f4;
+    }
+
+    h1 {
+      color: #333;
+    }
+
+    button,
+    input[type="file"] {
+      padding: 10px 20px;
+      margin: 10px;
+      font-size: 16px;
+      cursor: pointer;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+      background-color: #4CAF50;
+      color: white;
+    }
+
+    button:hover {
+      background-color: #45a049;
+    }
+
+    input[type="file"] {
+      display: none;
+    }
+
+    #responseMessage {
+      margin-top: 20px;
+      color: #555;
+    }
+  </style>
+</head>
+
+<body>
+  <h1>Procesamiento de Problemas Matemáticos</h1>
+
+  <!-- Formulario para abrir la cámara -->
+  <form id="abrirCamaraForm">
+    {% csrf_token %} <!-- Incluye el token CSRF -->
+    <button type="button" id="abrirCamara">Abrir Cámara</button>
+  </form>
+
+  <!-- Formulario para subir PDF -->
+  <form id="subirPDFForm" enctype="multipart/form-data">
+    {% csrf_token %} <!-- Incluye el token CSRF -->
+    <button type="button" id="subirPDF">Subir PDF</button>
+    <input type="file" id="filePDF" accept=".pdf">
+  </form>
+
+  <!-- Formulario para subir imagen -->
+  <form id="subirImagenForm" enctype="multipart/form-data">
+    {% csrf_token %} <!-- Incluye el token CSRF -->
+    <button type="button" id="subirImagen">Subir Imagen</button>
+    <input type="file" id="fileImagen" accept="image/*">
+  </form>
+
+  <div id="responseMessage"></div>
+
+  <script>
+    $(document).ready(function () {
+      // Obtener el token CSRF desde el meta tag
+      var csrfToken = $('meta[name="csrf-token"]').attr('content');
+
+      // Botón para abrir la cámara
+      $("#abrirCamara").click(function () {
+        $.ajax({
+          type: "POST",
+          url: "/abrir-camara/",
+          headers: {
+            'X-CSRFToken': csrfToken
+          },
+          success: function (response) {
+            $("#responseMessage").html("<p>Cámara cerrada correctamente.</p>");
+          },
+          error: function () {
+            $("#responseMessage").html("<p>Error al abrir la cámara.</p>");
+          }
+        });
+      });
+
+      // Botón para seleccionar el archivo PDF
+      $("#subirPDF").click(function () {
+        $("#filePDF").click();
+      });
+
+      // Cuando se selecciona un archivo PDF
+      $("#filePDF").change(function () {
+        var formData = new FormData();
+        formData.append("pdf", $("#filePDF")[0].files[0]);
+
+        $.ajax({
+          type: "POST",
+          url: "/procesar-pdf/",
+          headers: {
+            'X-CSRFToken': csrfToken
+          },
+          data: formData,
+          processData: false,
+          contentType: false,
+          success: function (response) {
+            $("#responseMessage").html("<p>PDF procesado correctamente.</p>");
+          },
+          error: function () {
+            $("#responseMessage").html("<p>Error al procesar el PDF.</p>");
+          }
+        });
+      });
+
+      // Botón para seleccionar la imagen
+      $("#subirImagen").click(function () {
+        $("#fileImagen").click();
+      });
+
+      // Cuando se selecciona un archivo de imagen
+      $("#fileImagen").change(function () {
+        var formData = new FormData();
+        formData.append("imagen", $("#fileImagen")[0].files[0]);
+
+        $.ajax({
+          type: "POST",
+          url: "/procesar-imagen/",
+          headers: {
+            'X-CSRFToken': csrfToken
+          },
+          data: formData,
+          processData: false,
+          contentType: false,
+          success: function (response) {
+            $("#responseMessage").html("<p>Imagen procesada correctamente.</p>");
+          },
+          error: function () {
+            $("#responseMessage").html("<p>Error al procesar la imagen.</p>");
+          }
+        });
+      });
+    });
+  </script>
+</body>
+
+</html>

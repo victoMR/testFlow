@@ -1,0 +1,9 @@
+.env
+
+/Models/*
+
+/Migrations/*
+
+/__pycache__/*
+
+/temp/*

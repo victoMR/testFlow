@@ -1,0 +1,9 @@
+/temp
+
+/static
+
+db.sqlite3
+
+../venv
+
+/testflow/__pycache__

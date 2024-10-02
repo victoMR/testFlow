@@ -1,15 +1,14 @@
 from django.shortcuts import render
-from django.http import JsonResponse, HttpResponse
+from django.http import JsonResponse
 import os
 import logging
 import cv2
 from PIL import Image
 from PyPDF2 import PdfReader
-from .model import Classifier, preprocess_image
 from django.views.decorators.csrf import csrf_exempt
-from pymongo import MongoClient , errors
+from pymongo import MongoClient, errors
 import re
-
+from .model import Classifier
 
 # Cargar variables de entorno desde el archivo .env
 from dotenv import load_dotenv
@@ -45,103 +44,69 @@ def index(request):
 
 
 @csrf_exempt
-def abrir_camara(request):
-    """Abre la cámara, procesa imágenes y detecta problemas matemáticos en tiempo real."""
-    if request.method == "POST":
-        cap = cv2.VideoCapture(0)
-        cap.set(cv2.CAP_PROP_FRAME_WIDTH, 320)
-        cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 240)
-        detected_problems = []
-        process_interval = 1  # Procesar cada 5 cuadros
-        frame_count = 0
-
-        if not cap.isOpened():
-            return JsonResponse({"error": "Error al abrir la cámara"}, status=500)
-
+def procesar_fotograma(request):
+    """Recibe un fotograma enviado por el frontend y detecta problemas matemáticos."""
+    if request.method == "POST" and "frame" in request.FILES:
+        frame_file = request.FILES["frame"]
         try:
-            while True:
-                ret, frame = cap.read()
-                if not ret:
-                    break
+            # Leer la imagen recibida y guardarla temporalmente
+            frame = Image.open(frame_file)
+            temp_image_path = "temp/temp_frame.png"
+            frame.save(temp_image_path)
 
-                frame_count += 1
+            # Clasificar problema usando el modelo
+            cleaned_formula, problem_type = Classifier.classify_problem(temp_image_path)
 
-                # Procesar cada N cuadros
-                if frame_count % process_interval == 0:
-                    # Preprocesar el frame
-                    preprocessed_frame = preprocess_image(frame)
+            if cleaned_formula:
+                # Intentar agregar el problema a la base de datos usando upsert
+                result = collection.update_one(
+                    {"formula": cleaned_formula},  # Buscar por fórmula
+                    {
+                        "$setOnInsert": {  # Solo se agrega si no existe
+                            "formula": cleaned_formula,
+                            "tipo": problem_type,
+                            "usos": 0,  # Inicialmente, los usos son 0
+                        },
+                    },
+                    upsert=True,  # Insertar si no existe
+                )
 
-                    # Guardar temporalmente la imagen procesada
-                    temp_image_path = "temp/temp_frame.png"
-                    cv2.imwrite(temp_image_path, preprocessed_frame)
-
-                    # Clasificar problema usando el modelo
-                    cleaned_formula, problem_type = Classifier.classify_problem(
-                        temp_image_path
+                # Verificar si se insertó un nuevo documento o se actualizó uno existente
+                if (
+                    result.upserted_id
+                ):  # Si se insertó uno nuevo, `upserted_id` tendrá valor
+                    logging.info(
+                        f"Nuevo problema agregado a la base de datos: {cleaned_formula}"
                     )
-
-                    if cleaned_formula:
-                        # Intentar agregar el problema a la base de datos usando upsert
-                        result = collection.update_one(
-                            {"formula": cleaned_formula},  # Buscar por fórmula
-                            {
-                                "$setOnInsert": {  # Solo se agrega si no existe
-                                    "formula": cleaned_formula,
-                                    "tipo": problem_type,
-                                    "usos": 0,  # Inicialmente, los usos son 0
-                                },
-                            },
-                            upsert=True,  # Insertar si no existe
-                        )
-
-                        # Verificar si se insertó un nuevo documento o se actualizó uno existente
-                        if (
-                            result.upserted_id
-                        ):  # Si se insertó uno nuevo, `upserted_id` tendrá valor
-                            logging.info(
-                                f"Nuevo problema agregado a la base de datos: {cleaned_formula}"
-                            )
-                            detected_problems.append(
-                                {"formula": cleaned_formula, "tipo": problem_type}
-                            )
-                        else:
-                            logging.info(
-                                f"Problema existente actualizado: {cleaned_formula}"
-                            )
-
-                # Dibujar un recuadro y mostrar el texto en la imagen
-                for idx, problem in enumerate(detected_problems):
-                    cv2.rectangle(
-                        frame, (50, 50 + idx * 30), (600, 80 + idx * 30), (0, 255, 0), 2
+                    return JsonResponse(
+                        {
+                            "formula": cleaned_formula,
+                            "tipo": problem_type,
+                            "message": "Nuevo problema detectado y agregado a la base de datos.",
+                        }
                     )
-                    cv2.putText(
-                        frame,
-                        f"{problem['formula']} ({problem['tipo']})",
-                        (60, 70 + idx * 30),
-                        cv2.FONT_HERSHEY_SIMPLEX,
-                        0.7,
-                        (255, 255, 255),
-                        2,
+                else:
+                    logging.info(f"Problema existente: {cleaned_formula}")
+                    return JsonResponse(
+                        {
+                            "formula": cleaned_formula,
+                            "tipo": problem_type,
+                            "message": "Problema ya existente en la base de datos.",
+                        }
                     )
+            return JsonResponse(
+                {"error": "No se detectó ninguna fórmula en el fotograma."}, status=404
+            )
 
-                # Mostrar la imagen en tiempo real
-                cv2.imshow("Cámara en tiempo real", frame)
+        except Exception as e:
+            logging.error(f"Error al procesar el fotograma: {str(e)}")
+            return JsonResponse(
+                {"error": f"Error al procesar el fotograma: {str(e)}"}, status=500
+            )
 
-                # Romper el bucle si se presiona 'q'
-                if cv2.waitKey(1) & 0xFF == ord("q"):
-                    break
-
-        finally:
-            cap.release()
-            cv2.destroyAllWindows()
-
-        return JsonResponse(
-            {
-                "message": "Cámara cerrada correctamente",
-                "problemas_detectados": detected_problems,
-            }
-        )
-    return JsonResponse({"error": "Método no permitido"}, status=405)
+    return JsonResponse(
+        {"error": "Debe proporcionar un fotograma en la solicitud."}, status=400
+    )
 
 
 @csrf_exempt
@@ -153,7 +118,7 @@ def procesar_pdf(request):
             pdf_reader = PdfReader(pdf_file)
             problemas_detectados = []
 
-            for i, page in enumerate(pdf_reader.pages):
+            for page in pdf_reader.pages:
                 text = page.extract_text() if page.extract_text() else ""
                 # Extracción de fórmulas del texto usando expresiones regulares
                 formulas = re.findall(r"[0-9\+\-\*\/\=\(\)\s]+", text)
@@ -209,7 +174,9 @@ def procesar_imagen(request):
                         "problema": {"formula": cleaned_formula, "tipo": problem_type},
                     }
                 )
-            return JsonResponse({"error": "No se detectó ninguna fórmula"}, status=404)
+            return JsonResponse(
+                {"error": "No se detectó ninguna fórmula en la imagen."}, status=404
+            )
 
         except Exception as e:
             logging.error(f"Error al procesar la imagen: {str(e)}")

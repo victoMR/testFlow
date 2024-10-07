@@ -26,6 +26,7 @@ INSTALLED_APPS = [
     "django.contrib.staticfiles",
     "ai",  # Incluye tu aplicación
     "corsheaders",  # Incluye CORS headers si usas frontend separado
+    'channels',  # Agregado según instrucciones
 ]
 
 # Middlewares
@@ -34,7 +35,6 @@ MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
     "whitenoise.middleware.WhiteNoiseMiddleware",  # Añade WhiteNoise para servir archivos estáticos
     "django.contrib.sessions.middleware.SessionMiddleware",
-    "corsheaders.middleware.CorsMiddleware",  # Middleware para CORS
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
@@ -251,3 +251,11 @@ FILE_UPLOAD_HANDLERS = [
 
 # Tiempo de expiración de la sesión (2 horas)
 SESSION_COOKIE_AGE = 7200
+
+ASGI_APPLICATION = 'testflow.asgi.application'
+
+CHANNEL_LAYERS = {
+    'default': {
+        'BACKEND': 'channels.layers.InMemoryChannelLayer',
+    },
+}

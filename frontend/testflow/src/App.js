@@ -1,10 +1,24 @@
-import React from 'react';
-import { Container, Button, Typography, Box, AppBar, Toolbar, IconButton } from '@mui/material';
-import { BrowserRouter as Router, Route, Routes, Link, useLocation } from 'react-router-dom';
-import { Home as HomeIcon } from 'lucide-react';
-import CameraPage from './components/Camera';
-import PdfProcessor from './components/PDFUpload';
-import ImageProcessor from './components/ImageUpload';
+import React from "react";
+import {
+  Container,
+  Button,
+  Typography,
+  Box,
+  AppBar,
+  Toolbar,
+  IconButton,
+} from "@mui/material";
+import {
+  BrowserRouter as Router,
+  Route,
+  Routes,
+  Link,
+  useLocation,
+} from "react-router-dom";
+import { Home as HomeIcon } from "lucide-react";
+import CameraPage from "./components/Camera";
+import PdfProcessor from "./components/PDFUpload";
+import ImageProcessor from "./components/ImageUpload";
 
 const NavButton = ({ to, color, children }) => {
   const location = useLocation();
@@ -25,11 +39,21 @@ const NavButton = ({ to, color, children }) => {
 };
 
 const App = () => {
+  const restetPage = () => {
+    window.location.reload();
+  };
   return (
     <Router>
       <AppBar position="static" color="primary" sx={{ mb: 4 }}>
         <Toolbar>
-          <IconButton edge="start" color="inherit" component={Link} to="/">
+          <IconButton
+            edge="start"
+            color="inherit"
+            component={Link}
+            to="/"
+            sx={{ mr: 2 }}
+            onClick={restetPage}
+          >
             <HomeIcon />
           </IconButton>
           <Typography variant="h6" sx={{ flexGrow: 1 }}>
@@ -49,9 +73,15 @@ const App = () => {
 
         <Box sx={{ my: 4 }}>
           {/* Botones de navegación debajo de Home */}
-          <NavButton to="/abrir-camara" color="primary">Abrir Cámara</NavButton>
-          <NavButton to="/procesar-pdf" color="secondary">Procesar PDF</NavButton>
-          <NavButton to="/procesar-imagen" color="success">Procesar Imagen</NavButton>
+          <NavButton to="/abrir-camara" color="primary">
+            Abrir Cámara
+          </NavButton>
+          <NavButton to="/procesar-pdf" color="secondary">
+            Procesar PDF
+          </NavButton>
+          <NavButton to="/procesar-imagen" color="success">
+            Procesar Imagen
+          </NavButton>
         </Box>
       </Container>
     </Router>

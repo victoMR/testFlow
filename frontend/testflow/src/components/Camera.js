@@ -16,7 +16,6 @@ const CameraPage = () => {
   const [isStreaming, setIsStreaming] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
-  const [frameCaptureInterval, setFrameCaptureInterval] = useState(null);
 
   // Función para iniciar el stream de la cámara
   const startVideo = useCallback(async () => {
@@ -30,11 +29,13 @@ const CameraPage = () => {
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
         videoRef.current.onloadedmetadata = () => {
-          videoRef.current.play().catch((err) => {
-            console.error("Error al reproducir el video: ", err);
-            setError("No se pudo iniciar la reproducción del video.");
-          });
-          setIsStreaming(true);
+          videoRef.current
+            .play()
+            .then(() => setIsStreaming(true))
+            .catch((err) => {
+              console.error("Error al reproducir el video: ", err);
+              setError("No se pudo iniciar la reproducción del video.");
+            });
         };
       }
     } catch (err) {
@@ -61,17 +62,9 @@ const CameraPage = () => {
     startVideo();
 
     return () => {
-      const currentVideo = videoRef.current;
-      if (currentVideo && currentVideo.srcObject) {
-        const tracks = currentVideo.srcObject.getTracks();
-        tracks.forEach((track) => track.stop());
-        currentVideo.srcObject = null; // Limpiar la fuente
-      }
-      if (frameCaptureInterval) {
-        clearInterval(frameCaptureInterval);
-      }
+      stopVideo(); // Apaga la cámara al desmontar el componente
     };
-  }, [startVideo, frameCaptureInterval]);
+  }, [startVideo, stopVideo]);
 
   // Función para capturar un fotograma y enviarlo al backend
   const captureFrame = useCallback(async () => {
@@ -88,20 +81,15 @@ const CameraPage = () => {
     canvas.toBlob(async (blob) => {
       if (!blob) return;
 
-      const formData = new FormData();
-      formData.append("frame", blob, "frame.jpg");
-
       setLoading(true);
       try {
         const response = await fetch(
-          "http://127.0.0.1:8000/api/process-frame",  // Asegúrate de que sea http, no https
+          "http://127.0.0.1:8000/api/procesar_fotograma/",
           {
             method: "POST",
-            body: formData,
-            mode: "cors",
-            credentials: "include",
+            body: blob,
             headers: {
-              'Accept': 'application/json',
+              "Content-Type": "image/jpeg",
             },
           }
         );
@@ -121,30 +109,24 @@ const CameraPage = () => {
     }, "image/jpeg");
   }, []);
 
-  // Función para iniciar la captura continua de fotogramas en segundo plano
+  // Función para iniciar la captura de fotogramas en intervalos definidos
   const startFrameCapture = useCallback(() => {
-    if (!isStreaming) return;
+    const captureInterval = setInterval(() => {
+      if (isStreaming) {
+        captureFrame();
+      }
+    }, 5000); // Capturar cada 5 segundos (5000 ms)
 
-    const captureInterval = () => {
-      captureFrame();
-      // Usar setTimeout en lugar de setInterval para garantizar ejecución en segundo plano
-      setTimeout(captureInterval, 2000);
-    };
-
-    captureInterval();
+    return () => clearInterval(captureInterval);
   }, [isStreaming, captureFrame]);
 
   // Hook para iniciar la captura automática cuando la cámara comienza a transmitir
   useEffect(() => {
     if (isStreaming) {
-      startFrameCapture();
+      const stopCapture = startFrameCapture();
+      return () => stopCapture();
     }
-    return () => {
-      if (frameCaptureInterval) {
-        clearInterval(frameCaptureInterval);
-      }
-    };
-  }, [isStreaming, startFrameCapture, frameCaptureInterval]);
+  }, [isStreaming, startFrameCapture]);
 
   return (
     <Container maxWidth="sm">
@@ -193,7 +175,7 @@ const CameraPage = () => {
         </Paper>
         <canvas ref={canvasRef} style={{ display: "none" }} />
         <Typography variant="body1" align="center" gutterBottom>
-          Capturando frames y enviándolos al backend cada 2 segundos...
+          Capturando frames y enviándolos al backend cada 5 segundos...
         </Typography>
         <Button
           variant="contained"
@@ -207,15 +189,14 @@ const CameraPage = () => {
         </Button>
         <Button
           variant="outlined"
-          color="danger"
+          color="error" // Color de botón corregido
           fullWidth
           onClick={stopVideo}
           disabled={!isStreaming}
           sx={{ mt: 2 }}
         >
           Apagar Cámara {/* Añadido el texto del botón */}
-        </Button>{" "}
-        {/* Cerrado el botón que faltaba */}
+        </Button>
       </Box>
     </Container>
   );

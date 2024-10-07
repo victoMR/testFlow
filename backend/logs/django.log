@@ -1,0 +1,120 @@
+INFO 2024-10-06 21:34:34,801 autoreload 17396 6736 Watching for file changes with StatReloader
+INFO 2024-10-06 21:34:48,298 model 17396 6736 Iniciando la carga del modelo de visión.
+INFO 2024-10-06 21:34:55,533 model 17396 6736 Modelo de visión cargado exitosamente.
+INFO 2024-10-06 21:34:57,198 views 17396 6736 Conexión exitosa a MongoDB en mongodb+srv://admin:L3J52w7zP9raHPel@testflowclouster.wxv1v.mongodb.net/?retryWrites=true&w=majority&appName=TestFlowClouster
+INFO 2024-10-06 21:35:23,645 basehttp 17396 23460 "POST /api/process-frame/ HTTP/1.1" 301 0
+INFO 2024-10-06 21:35:26,251 basehttp 17396 9352 "POST /api/process-frame/ HTTP/1.1" 301 0
+INFO 2024-10-06 21:35:28,262 basehttp 17396 23580 "POST /api/process-frame/ HTTP/1.1" 301 0
+INFO 2024-10-06 21:38:44,648 autoreload 17396 6736 C:\Users\raton\OneDrive\Documentos\univ vks\7to Cuatri\ArqSoftware\testFlow\backend\testflow\settings.py changed, reloading.
+INFO 2024-10-06 21:38:48,256 autoreload 32612 18112 Watching for file changes with StatReloader
+INFO 2024-10-06 21:39:02,311 model 32612 18112 Iniciando la carga del modelo de visión.
+INFO 2024-10-06 21:39:09,560 model 32612 18112 Modelo de visión cargado exitosamente.
+INFO 2024-10-06 21:39:11,267 views 32612 18112 Conexión exitosa a MongoDB en mongodb+srv://admin:L3J52w7zP9raHPel@testflowclouster.wxv1v.mongodb.net/?retryWrites=true&w=majority&appName=TestFlowClouster
+INFO 2024-10-06 21:39:22,997 autoreload 32612 18112 C:\Users\raton\OneDrive\Documentos\univ vks\7to Cuatri\ArqSoftware\testFlow\backend\testflow\settings.py changed, reloading.
+INFO 2024-10-06 21:39:24,866 autoreload 2444 4128 Watching for file changes with StatReloader
+INFO 2024-10-06 21:39:39,709 model 2444 4128 Iniciando la carga del modelo de visión.
+INFO 2024-10-06 21:39:46,792 model 2444 4128 Modelo de visión cargado exitosamente.
+INFO 2024-10-06 21:39:47,995 views 2444 4128 Conexión exitosa a MongoDB en mongodb+srv://admin:L3J52w7zP9raHPel@testflowclouster.wxv1v.mongodb.net/?retryWrites=true&w=majority&appName=TestFlowClouster
+INFO 2024-10-06 21:41:21,617 basehttp 2444 22536 "OPTIONS /api/process-frame/ HTTP/1.1" 301 0
+INFO 2024-10-06 21:41:23,613 basehttp 2444 9068 "OPTIONS /api/process-frame/ HTTP/1.1" 301 0
+INFO 2024-10-06 21:42:11,530 autoreload 2444 4128 C:\Users\raton\OneDrive\Documentos\univ vks\7to Cuatri\ArqSoftware\testFlow\backend\testflow\settings.py changed, reloading.
+INFO 2024-10-06 21:42:15,564 autoreload 30352 5308 Watching for file changes with StatReloader
+INFO 2024-10-06 21:42:30,234 model 30352 5308 Iniciando la carga del modelo de visión.
+INFO 2024-10-06 21:42:37,246 model 30352 5308 Modelo de visión cargado exitosamente.
+INFO 2024-10-06 21:42:39,218 views 30352 5308 Conexión exitosa a MongoDB en mongodb+srv://admin:L3J52w7zP9raHPel@testflowclouster.wxv1v.mongodb.net/?retryWrites=true&w=majority&appName=TestFlowClouster
+INFO 2024-10-06 21:42:50,015 basehttp 30352 15664 "POST /api/process-frame/ HTTP/1.1" 301 0
+INFO 2024-10-06 21:42:51,166 basehttp 30352 6184 "OPTIONS /api/process-frame/ HTTP/1.1" 301 0
+INFO 2024-10-06 21:42:56,582 basehttp 30352 24944 "POST /api/process-frame/ HTTP/1.1" 301 0
+INFO 2024-10-06 21:42:58,596 basehttp 30352 30024 "POST /api/process-frame/ HTTP/1.1" 301 0
+INFO 2024-10-06 21:45:17,213 autoreload 30352 5308 C:\Users\raton\OneDrive\Documentos\univ vks\7to Cuatri\ArqSoftware\testFlow\backend\ai\urls.py changed, reloading.
+INFO 2024-10-06 21:45:20,427 autoreload 15664 30652 Watching for file changes with StatReloader
+INFO 2024-10-06 21:45:33,049 model 15664 30652 Iniciando la carga del modelo de visión.
+INFO 2024-10-06 21:45:40,579 model 15664 30652 Modelo de visión cargado exitosamente.
+INFO 2024-10-06 21:45:42,211 views 15664 30652 Conexión exitosa a MongoDB en mongodb+srv://admin:L3J52w7zP9raHPel@testflowclouster.wxv1v.mongodb.net/?retryWrites=true&w=majority&appName=TestFlowClouster
+INFO 2024-10-06 21:45:47,495 autoreload 15664 30652 C:\Users\raton\OneDrive\Documentos\univ vks\7to Cuatri\ArqSoftware\testFlow\backend\ai\urls.py changed, reloading.
+INFO 2024-10-06 21:45:50,817 autoreload 31780 29820 Watching for file changes with StatReloader
+INFO 2024-10-06 21:46:01,798 model 31780 29820 Iniciando la carga del modelo de visión.
+INFO 2024-10-06 21:46:07,146 model 31780 29820 Modelo de visión cargado exitosamente.
+INFO 2024-10-06 21:46:08,212 views 31780 29820 Conexión exitosa a MongoDB en mongodb+srv://admin:L3J52w7zP9raHPel@testflowclouster.wxv1v.mongodb.net/?retryWrites=true&w=majority&appName=TestFlowClouster
+INFO 2024-10-06 21:46:21,446 basehttp 31780 22544 "POST /api/process-frame/ HTTP/1.1" 301 0
+INFO 2024-10-06 21:46:23,459 basehttp 31780 4120 "POST /api/process-frame/ HTTP/1.1" 301 0
+INFO 2024-10-06 21:47:34,313 basehttp 31780 31112 "POST /api/process-frame HTTP/1.1" 301 0
+INFO 2024-10-06 21:47:34,321 basehttp 31780 1744 code 400, message Bad request version ('À\x13À')
+ERROR 2024-10-06 21:47:34,322 basehttp 31780 1744 You're accessing the development server over HTTPS, but it only supports HTTP.
+INFO 2024-10-06 21:48:00,312 basehttp 31780 12440 "POST /api/process-frame HTTP/1.1" 301 0
+INFO 2024-10-06 21:48:00,318 basehttp 31780 28532 code 400, message Bad request version ('À\x13À')
+ERROR 2024-10-06 21:48:00,318 basehttp 31780 28532 You're accessing the development server over HTTPS, but it only supports HTTP.
+INFO 2024-10-06 21:48:07,539 basehttp 31780 4136 "POST /api/process-frame HTTP/1.1" 301 0
+INFO 2024-10-06 21:48:07,542 basehttp 31780 14104 code 400, message Bad request version ('À\x13À')
+ERROR 2024-10-06 21:48:07,542 basehttp 31780 14104 You're accessing the development server over HTTPS, but it only supports HTTP.
+INFO 2024-10-06 21:48:49,326 basehttp 31780 4812 "GET /api/process-frame HTTP/1.1" 301 0
+INFO 2024-10-06 21:48:49,330 basehttp 31780 32676 code 400, message Bad request version ('À\x13À')
+ERROR 2024-10-06 21:48:49,330 basehttp 31780 32676 You're accessing the development server over HTTPS, but it only supports HTTP.
+INFO 2024-10-06 21:48:56,502 basehttp 31780 33568 "POST /api/process-frame HTTP/1.1" 301 0
+INFO 2024-10-06 21:48:56,506 basehttp 31780 11580 code 400, message Bad request version ('À\x13À')
+ERROR 2024-10-06 21:48:56,507 basehttp 31780 11580 You're accessing the development server over HTTPS, but it only supports HTTP.
+INFO 2024-10-06 21:52:01,108 autoreload 31780 29820 C:\Users\raton\OneDrive\Documentos\univ vks\7to Cuatri\ArqSoftware\testFlow\backend\testflow\urls.py changed, reloading.
+INFO 2024-10-06 21:52:03,918 autoreload 31328 17072 Watching for file changes with StatReloader
+INFO 2024-10-06 21:52:16,532 model 31328 17072 Iniciando la carga del modelo de visión.
+INFO 2024-10-06 21:52:24,383 model 31328 17072 Modelo de visión cargado exitosamente.
+INFO 2024-10-06 21:52:25,952 views 31328 17072 Conexión exitosa a MongoDB en mongodb+srv://admin:L3J52w7zP9raHPel@testflowclouster.wxv1v.mongodb.net/?retryWrites=true&w=majority&appName=TestFlowClouster
+INFO 2024-10-06 21:52:55,043 autoreload 31328 17072 C:\Users\raton\OneDrive\Documentos\univ vks\7to Cuatri\ArqSoftware\testFlow\backend\testflow\settings.py changed, reloading.
+INFO 2024-10-06 21:52:57,788 autoreload 20864 1900 Watching for file changes with StatReloader
+INFO 2024-10-06 21:53:09,006 model 20864 1900 Iniciando la carga del modelo de visión.
+INFO 2024-10-06 21:53:15,608 model 20864 1900 Modelo de visión cargado exitosamente.
+INFO 2024-10-06 21:53:16,768 views 20864 1900 Conexión exitosa a MongoDB en mongodb+srv://admin:L3J52w7zP9raHPel@testflowclouster.wxv1v.mongodb.net/?retryWrites=true&w=majority&appName=TestFlowClouster
+INFO 2024-10-06 21:54:35,694 autoreload 20864 1900 C:\Users\raton\OneDrive\Documentos\univ vks\7to Cuatri\ArqSoftware\testFlow\backend\testflow\settings.py changed, reloading.
+INFO 2024-10-06 21:54:37,775 autoreload 31748 33076 Watching for file changes with StatReloader
+INFO 2024-10-06 21:54:48,822 model 31748 33076 Iniciando la carga del modelo de visión.
+INFO 2024-10-06 21:54:56,444 model 31748 33076 Modelo de visión cargado exitosamente.
+INFO 2024-10-06 21:54:58,120 views 31748 33076 Conexión exitosa a MongoDB en mongodb+srv://admin:L3J52w7zP9raHPel@testflowclouster.wxv1v.mongodb.net/?retryWrites=true&w=majority&appName=TestFlowClouster
+INFO 2024-10-06 21:55:32,298 autoreload 31748 33076 C:\Users\raton\OneDrive\Documentos\univ vks\7to Cuatri\ArqSoftware\testFlow\backend\testflow\settings.py changed, reloading.
+INFO 2024-10-06 21:55:34,400 autoreload 5656 31328 Watching for file changes with StatReloader
+INFO 2024-10-06 21:55:45,701 model 5656 31328 Iniciando la carga del modelo de visión.
+INFO 2024-10-06 21:55:52,919 model 5656 31328 Modelo de visión cargado exitosamente.
+INFO 2024-10-06 21:55:54,195 views 5656 31328 Conexión exitosa a MongoDB en mongodb+srv://admin:L3J52w7zP9raHPel@testflowclouster.wxv1v.mongodb.net/?retryWrites=true&w=majority&appName=TestFlowClouster
+INFO 2024-10-06 21:56:04,726 basehttp 5656 15756 "POST /api/process-frame/ HTTP/1.1" 301 0
+INFO 2024-10-06 21:56:37,788 basehttp 5656 28468 "POST /api/process-frame/ HTTP/1.1" 301 0
+INFO 2024-10-06 21:58:04,040 autoreload 5656 31328 C:\Users\raton\OneDrive\Documentos\univ vks\7to Cuatri\ArqSoftware\testFlow\backend\testflow\settings.py changed, reloading.
+INFO 2024-10-06 21:58:06,311 autoreload 16212 6248 Watching for file changes with StatReloader
+INFO 2024-10-06 21:58:19,196 model 16212 6248 Iniciando la carga del modelo de visión.
+INFO 2024-10-06 21:58:27,980 model 16212 6248 Modelo de visión cargado exitosamente.
+INFO 2024-10-06 21:58:29,933 views 16212 6248 Conexión exitosa a MongoDB en mongodb+srv://admin:L3J52w7zP9raHPel@testflowclouster.wxv1v.mongodb.net/?retryWrites=true&w=majority&appName=TestFlowClouster
+INFO 2024-10-06 21:59:35,292 autoreload 16212 6248 C:\Users\raton\OneDrive\Documentos\univ vks\7to Cuatri\ArqSoftware\testFlow\backend\testflow\settings.py changed, reloading.
+INFO 2024-10-06 21:59:37,819 autoreload 26788 3752 Watching for file changes with StatReloader
+INFO 2024-10-06 21:59:50,067 model 26788 3752 Iniciando la carga del modelo de visión.
+INFO 2024-10-06 22:00:01,407 autoreload 22536 28928 Watching for file changes with StatReloader
+INFO 2024-10-06 22:00:13,826 model 22536 28928 Iniciando la carga del modelo de visión.
+INFO 2024-10-06 22:00:21,215 model 22536 28928 Modelo de visión cargado exitosamente.
+INFO 2024-10-06 22:00:22,898 views 22536 28928 Conexión exitosa a MongoDB en mongodb+srv://admin:L3J52w7zP9raHPel@testflowclouster.wxv1v.mongodb.net/?retryWrites=true&w=majority&appName=TestFlowClouster
+INFO 2024-10-06 22:00:28,328 basehttp 22536 32456 "POST /api/process-frame HTTP/1.1" 301 0
+INFO 2024-10-06 22:00:28,365 basehttp 22536 32540 code 400, message Bad HTTP/0.9 request type ('\x16\x03\x01\x02\x00\x01\x00\x01ü\x03\x03\x17\x84\x93\x8eÏ\x1b\x9e¤Úeèà\x82GÇÔµí¶>û\x07æ\x94Ë\x83\x14o(bcg')
+ERROR 2024-10-06 22:00:28,366 basehttp 22536 32540 You're accessing the development server over HTTPS, but it only supports HTTP.
+INFO 2024-10-06 22:00:28,396 basehttp 22536 3632 code 400, message Bad request syntax ('\x16\x03\x01\x02\x00\x01\x00\x01ü\x03\x03V\x7fÄ\x14ç÷RÏöB\x15B\x15Ø\x86Ý\x11\x94<')
+ERROR 2024-10-06 22:00:28,397 basehttp 22536 3632 You're accessing the development server over HTTPS, but it only supports HTTP.
+INFO 2024-10-06 22:00:30,322 basehttp 22536 10772 "POST /api/process-frame HTTP/1.1" 301 0
+INFO 2024-10-06 22:00:30,353 basehttp 22536 32912 code 400, message Bad request syntax ('\x16\x03\x01\x02\x00\x01\x00\x01ü\x03\x03VÙ[vC}\x927d9e\x18\x10H×õÁ')
+ERROR 2024-10-06 22:00:30,354 basehttp 22536 32912 You're accessing the development server over HTTPS, but it only supports HTTP.
+INFO 2024-10-06 22:00:30,378 basehttp 22536 17984 code 400, message Bad request version ("gÏ\x0e\x00D\x13\x02\x13\x03\x13\x01À,À0\x00\x9fÌ©Ì¨ÌªÀ+À/\x00\x9eÀ$À(\x00kÀ#À'\x00gÀ")
+ERROR 2024-10-06 22:00:30,379 basehttp 22536 17984 You're accessing the development server over HTTPS, but it only supports HTTP.
+INFO 2024-10-06 22:01:19,626 autoreload 11696 19736 Watching for file changes with StatReloader
+INFO 2024-10-06 22:01:30,153 model 11696 19736 Iniciando la carga del modelo de visión.
+INFO 2024-10-06 22:01:37,711 model 11696 19736 Modelo de visión cargado exitosamente.
+INFO 2024-10-06 22:01:39,355 views 11696 19736 Conexión exitosa a MongoDB en mongodb+srv://admin:L3J52w7zP9raHPel@testflowclouster.wxv1v.mongodb.net/?retryWrites=true&w=majority&appName=TestFlowClouster
+INFO 2024-10-06 22:02:42,223 autoreload 11696 19736 C:\Users\raton\OneDrive\Documentos\univ vks\7to Cuatri\ArqSoftware\testFlow\backend\testflow\settings.py changed, reloading.
+INFO 2024-10-06 22:02:44,641 autoreload 23676 7608 Watching for file changes with StatReloader
+INFO 2024-10-06 22:02:55,213 model 23676 7608 Iniciando la carga del modelo de visión.
+INFO 2024-10-06 22:03:02,082 model 23676 7608 Modelo de visión cargado exitosamente.
+INFO 2024-10-06 22:03:03,635 views 23676 7608 Conexión exitosa a MongoDB en mongodb+srv://admin:L3J52w7zP9raHPel@testflowclouster.wxv1v.mongodb.net/?retryWrites=true&w=majority&appName=TestFlowClouster
+INFO 2024-10-06 22:03:04,485 model 23676 24004 Procesando imagen con el modelo Im2Latex: temp/temp_frame.png
+INFO 2024-10-06 22:03:04,488 model 23676 18864 Procesando imagen con el modelo Im2Latex: temp/temp_frame.png
+INFO 2024-10-06 22:03:07,426 model 23676 28872 Procesando imagen con el modelo Im2Latex: temp/temp_frame.png
+INFO 2024-10-06 22:03:07,429 model 23676 6188 Procesando imagen con el modelo Im2Latex: temp/temp_frame.png
+INFO 2024-10-06 22:03:10,421 model 23676 29432 Procesando imagen con el modelo Im2Latex: temp/temp_frame.png
+INFO 2024-10-06 22:03:10,426 model 23676 33768 Procesando imagen con el modelo Im2Latex: temp/temp_frame.png
+INFO 2024-10-06 22:53:44,595 model 36148 34456 Iniciando la carga del modelo de visión.
+INFO 2024-10-06 22:53:52,040 model 36148 34456 Modelo de visión cargado exitosamente.
+INFO 2024-10-06 22:53:52,560 views 36148 34456 Conexión exitosa a MongoDB en mongodb+srv://admin:L3J52w7zP9raHPel@testflowclouster.wxv1v.mongodb.net/?retryWrites=true&w=majority&appName=TestFlowClouster
+INFO 2024-10-06 22:54:21,597 model 35256 24264 Iniciando la carga del modelo de visión.
+INFO 2024-10-06 22:54:26,726 model 35256 24264 Modelo de visión cargado exitosamente.
+INFO 2024-10-06 22:54:26,931 views 35256 24264 Conexión exitosa a MongoDB en mongodb+srv://admin:L3J52w7zP9raHPel@testflowclouster.wxv1v.mongodb.net/?retryWrites=true&w=majority&appName=TestFlowClouster

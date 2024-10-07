@@ -1,2 +1,8 @@
 /venv
 
+/certificate.pem
+
+/privateKey.pem
+
+/frontend
+

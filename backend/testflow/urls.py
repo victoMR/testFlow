@@ -21,8 +21,8 @@ from django.conf import settings
 from django.conf.urls.static import static
 
 urlpatterns = [
-    path("admin/", admin.site.urls),
-    path("", include("ai.urls")),  # Incluye las URLs de tu app 'ai'
+    path('admin/', admin.site.urls),
+    path('api/', include('ai.urls')),  # Esto añade 'api/' a todas las rutas de ai.urls
 ]
 
 # Configurar las URLs para servir archivos en modo de desarrollo

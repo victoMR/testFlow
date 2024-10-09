@@ -4,7 +4,12 @@ from django.core.files.base import ContentFile
 from pymongo import MongoClient, errors
 from dotenv import load_dotenv
 from concurrent.futures import ThreadPoolExecutor
-from .model import Classifier, render_latex_to_image, process_with_im2latex
+from .model import (
+    Classifier,
+    render_latex_to_image,
+    process_with_im2latex,
+    convertir_a_latex,
+)
 import os
 import logging
 import cv2
@@ -19,6 +24,7 @@ import hashlib
 import redis
 import json
 from django.conf import settings
+from django.views.decorators.csrf import csrf_exempt
 
 # Cargar variables de entorno
 load_dotenv()
@@ -27,7 +33,7 @@ load_dotenv()
 logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s - %(levelname)s - %(message)s",
-    encoding='utf-8'  # Asegura que los logs puedan manejar caracteres Unicode
+    encoding="utf-8",  # Asegura que los logs puedan manejar caracteres Unicode
 )
 logger = logging.getLogger(__name__)
 
@@ -41,7 +47,7 @@ try:
     client = MongoClient(mongo_uri)
     db = client["math_problems_db"]
     collection = db["problemas"]
-    logger.info(f"Conexión exitosa a MongoDB en {mongo_uri}")
+    logger.info(f"Conexión exitosa a MongoDB en la uri")
 except errors.ConnectionFailure as e:
     logger.error(f"No se pudo conectar a MongoDB: {e}")
     raise
@@ -79,25 +85,29 @@ async def index(scope, receive, send):
 
 async def procesar_fotograma(scope, receive, send):
     if scope["method"] == "OPTIONS":
-        await send({
-            "type": "http.response.start",
-            "status": 200,
-            "headers": [
-                (b"content-type", b"text/plain"),
-                (b"access-control-allow-origin", b"*"),
-                (b"access-control-allow-methods", b"POST, OPTIONS"),
-                (b"access-control-allow-headers", b"Content-Type"),
-            ],
-        })
+        await send(
+            {
+                "type": "http.response.start",
+                "status": 200,
+                "headers": [
+                    (b"content-type", b"text/plain"),
+                    (b"access-control-allow-origin", b"*"),
+                    (b"access-control-allow-methods", b"POST, OPTIONS"),
+                    (b"access-control-allow-headers", b"Content-Type"),
+                ],
+            }
+        )
         await send({"type": "http.response.body", "body": b""})
         return
 
     if scope["method"] != "POST":
-        await send({
-            "type": "http.response.start",
-            "status": 405,
-            "headers": [(b"content-type", b"text/plain")],
-        })
+        await send(
+            {
+                "type": "http.response.start",
+                "status": 405,
+                "headers": [(b"content-type", b"text/plain")],
+            }
+        )
         await send({"type": "http.response.body", "body": b"Method Not Allowed"})
         return
 
@@ -109,12 +119,19 @@ async def procesar_fotograma(scope, receive, send):
         more_body = message.get("more_body", False)
 
     if not body:
-        await send({
-            "type": "http.response.start",
-            "status": 400,
-            "headers": [(b"content-type", b"text/plain")],
-        })
-        await send({"type": "http.response.body", "body": "No se proporcionó un fotograma".encode()})
+        await send(
+            {
+                "type": "http.response.start",
+                "status": 400,
+                "headers": [(b"content-type", b"text/plain")],
+            }
+        )
+        await send(
+            {
+                "type": "http.response.body",
+                "body": "No se proporcionó un fotograma".encode(),
+            }
+        )
         return
 
     try:
@@ -124,11 +141,13 @@ async def procesar_fotograma(scope, receive, send):
         cached_result = redis_client.get(img_hash)
         if cached_result:
             logger.info(f"Resultado obtenido de caché para {img_hash}")
-            await send({
-                "type": "http.response.start",
-                "status": 200,
-                "headers": [(b"content-type", b"application/json")],
-            })
+            await send(
+                {
+                    "type": "http.response.start",
+                    "status": 200,
+                    "headers": [(b"content-type", b"application/json")],
+                }
+            )
             await send({"type": "http.response.body", "body": cached_result.encode()})
             return
 
@@ -145,10 +164,14 @@ async def procesar_fotograma(scope, receive, send):
         # Asumimos que process_with_im2latex ahora devuelve una tupla (formula, tipo)
         cleaned_formula, problem_type = processed_result
 
-        logger.info(f"Formula clasificada: {cleaned_formula}, Tipo de problema: {problem_type}")
+        logger.info(
+            f"Formula clasificada: {cleaned_formula}, Tipo de problema: {problem_type}"
+        )
 
         if cleaned_formula:
-            latex_image = await asyncio.to_thread(render_latex_to_image, cleaned_formula)
+            latex_image = await asyncio.to_thread(
+                render_latex_to_image, cleaned_formula
+            )
             buffered = io.BytesIO()
             latex_image.save(buffered, format="PNG")
             img_str = base64.b64encode(buffered.getvalue()).decode()
@@ -167,7 +190,11 @@ async def procesar_fotograma(scope, receive, send):
                 upsert=True,
             )
 
-            message = "Nuevo problema detectado y agregado a la base de datos." if result.upserted_id else "Problema existente actualizado en la base de datos."
+            message = (
+                "Nuevo problema detectado y agregado a la base de datos."
+                if result.upserted_id
+                else "Problema existente actualizado en la base de datos."
+            )
 
             response_data = {
                 "formula": cleaned_formula,
@@ -180,36 +207,46 @@ async def procesar_fotograma(scope, receive, send):
 
             redis_client.setex(img_hash, settings.CACHE_TIMEOUT, json_response)
 
-            await send({
-                "type": "http.response.start",
-                "status": 200,
-                "headers": [(b"content-type", b"application/json")],
-            })
+            await send(
+                {
+                    "type": "http.response.start",
+                    "status": 200,
+                    "headers": [(b"content-type", b"application/json")],
+                }
+            )
             await send({"type": "http.response.body", "body": json_response.encode()})
             return
 
         logger.warning("No se detectó ninguna fórmula en el fotograma.")
-        await send({
-            "type": "http.response.start",
-            "status": 404,
-            "headers": [(b"content-type", b"text/plain")],
-        })
-        await send({
-            "type": "http.response.body",
-            "body": "No se detectó ninguna fórmula en el fotograma".encode(),
-        })
+        await send(
+            {
+                "type": "http.response.start",
+                "status": 404,
+                "headers": [(b"content-type", b"text/plain")],
+            }
+        )
+        await send(
+            {
+                "type": "http.response.body",
+                "body": "No se detectó ninguna fórmula en el fotograma".encode(),
+            }
+        )
 
     except Exception as e:
         logger.error(f"Error al procesar el fotograma: {str(e)}", exc_info=True)
-        await send({
-            "type": "http.response.start",
-            "status": 500,
-            "headers": [(b"content-type", b"text/plain")],
-        })
-        await send({
-            "type": "http.response.body",
-            "body": f"Error interno del servidor al procesar el fotograma: {str(e)}".encode(),
-        })
+        await send(
+            {
+                "type": "http.response.start",
+                "status": 500,
+                "headers": [(b"content-type", b"text/plain")],
+            }
+        )
+        await send(
+            {
+                "type": "http.response.body",
+                "body": f"Error interno del servidor al procesar el fotograma: {str(e)}".encode(),
+            }
+        )
 
 
 async def procesar_pdf(scope, receive, send):
@@ -356,6 +393,30 @@ async def procesar_imagen(scope, receive, send):
     finally:
         if os.path.exists(temp_file_path):
             os.remove(temp_file_path)
+
+
+@csrf_exempt  # Para desactivar CSRF en esta vista (usualmente en desarrollo)
+def procesar_texto(request):
+    # Verificar que la solicitud es POST
+    if request.method != "POST":
+        return JsonResponse({"error": "Método no permitido"}, status=405)
+
+    try:
+        # Cargar el contenido del cuerpo de la solicitud JSON
+        data = json.loads(request.body)
+        texto = data.get("texto", "")  # Obtener el texto del cuerpo de la solicitud
+
+        # Convertir el texto a LaTeX
+        latex = convertir_a_latex(texto)
+
+        # Responder con el resultado en formato JSON
+        return JsonResponse({"latex": latex}, status=200)
+
+    except json.JSONDecodeError:
+        return JsonResponse({"error": "JSON inválido"}, status=400)
+
+    except Exception as e:
+        return JsonResponse({"error": str(e)}, status=500)
 
 
 # Función para manejar el cierre del ThreadPoolExecutor

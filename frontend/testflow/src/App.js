@@ -19,6 +19,7 @@ import { Home as HomeIcon } from "lucide-react";
 import CameraPage from "./components/Camera";
 import PdfProcessor from "./components/PDFUpload";
 import ImageProcessor from "./components/ImageUpload";
+import EntradaMatematica from "./components/Text"; // Importa el nuevo componente
 
 const NavButton = ({ to, color, children }) => {
   const location = useLocation();
@@ -39,9 +40,10 @@ const NavButton = ({ to, color, children }) => {
 };
 
 const App = () => {
-  const restetPage = () => {
+  const resetPage = () => {
     window.location.reload();
   };
+
   return (
     <Router>
       <AppBar position="static" color="primary" sx={{ mb: 4 }}>
@@ -52,7 +54,7 @@ const App = () => {
             component={Link}
             to="/"
             sx={{ mr: 2 }}
-            onClick={restetPage}
+            onClick={resetPage}
           >
             <HomeIcon />
           </IconButton>
@@ -63,16 +65,16 @@ const App = () => {
       </AppBar>
 
       <Container maxWidth="sm">
-        {/* Página de inicio */}
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/abrir-camara" element={<CameraPage />} />
           <Route path="/procesar-pdf" element={<PdfProcessor />} />
           <Route path="/procesar-imagen" element={<ImageProcessor />} />
+          <Route path="/procesar-texto" element={<EntradaMatematica />} />{" "}
+          {/* Nueva ruta */}
         </Routes>
 
         <Box sx={{ my: 4 }}>
-          {/* Botones de navegación debajo de Home */}
           <NavButton to="/abrir-camara" color="primary">
             Abrir Cámara
           </NavButton>
@@ -81,6 +83,9 @@ const App = () => {
           </NavButton>
           <NavButton to="/procesar-imagen" color="success">
             Procesar Imagen
+          </NavButton>
+          <NavButton to="/procesar-texto" color="info">
+            Procesar Texto
           </NavButton>
         </Box>
       </Container>

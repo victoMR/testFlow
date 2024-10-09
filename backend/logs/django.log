@@ -50,3 +50,177 @@ Traceback (most recent call last):
     latex_image.save(buffered, format="PNG")
     ^^^^^^^^^^^^^^^^
 AttributeError: 'NoneType' object has no attribute 'save'
+INFO 2024-10-07 15:05:31,686 autoreload 16524 368 Watching for file changes with StatReloader
+INFO 2024-10-07 15:05:38,030 model 16524 368 Iniciando la carga del modelo de visión.
+INFO 2024-10-07 15:05:44,281 model 16524 368 Modelo de visión cargado exitosamente.
+INFO 2024-10-07 15:05:45,374 views 16524 368 Conexión exitosa a MongoDB en la uri
+INFO 2024-10-07 15:05:45,375 views 16524 368 Conexión exitosa a Redis en redis-11043.c274.us-east-1-3.ec2.redns.redis-cloud.com:11043/0
+INFO 2024-10-07 15:05:45,600 server 16524 26668 HTTP/2 support not enabled (install the http2 and tls Twisted extras)
+INFO 2024-10-07 15:05:45,601 server 16524 26668 Configuring endpoint tcp:port=8000:interface=0.0.0.0
+INFO 2024-10-07 15:05:45,603 server 16524 26668 Listening on TCP address 0.0.0.0:8000
+ERROR 2024-10-07 15:05:46,609 server 16524 26668 Exception inside application: No route found for path 'api/procesar_texto'.
+Traceback (most recent call last):
+  File "C:\Users\raton\OneDrive\Documentos\univ vks\7to Cuatri\ArqSoftware\testFlow\venv\Lib\site-packages\channels\staticfiles.py", line 44, in __call__
+    return await self.application(scope, receive, send)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\raton\OneDrive\Documentos\univ vks\7to Cuatri\ArqSoftware\testFlow\venv\Lib\site-packages\channels\routing.py", line 71, in __call__
+    return await application(scope, receive, send)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\raton\OneDrive\Documentos\univ vks\7to Cuatri\ArqSoftware\testFlow\venv\Lib\site-packages\channels\routing.py", line 168, in __call__
+    raise ValueError("No route found for path %r." % path)
+ValueError: No route found for path 'api/procesar_texto'.
+ERROR 2024-10-07 15:05:46,616 runserver 16524 26668 [35;1mHTTP OPTIONS /api/procesar_texto 500 [1.00, 127.0.0.1:41118][0m
+ERROR 2024-10-07 15:05:46,616 server 16524 26668 Exception inside application: No route found for path 'api/procesar_texto'.
+Traceback (most recent call last):
+  File "C:\Users\raton\OneDrive\Documentos\univ vks\7to Cuatri\ArqSoftware\testFlow\venv\Lib\site-packages\channels\staticfiles.py", line 44, in __call__
+    return await self.application(scope, receive, send)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\raton\OneDrive\Documentos\univ vks\7to Cuatri\ArqSoftware\testFlow\venv\Lib\site-packages\channels\routing.py", line 71, in __call__
+    return await application(scope, receive, send)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\raton\OneDrive\Documentos\univ vks\7to Cuatri\ArqSoftware\testFlow\venv\Lib\site-packages\channels\routing.py", line 168, in __call__
+    raise ValueError("No route found for path %r." % path)
+ValueError: No route found for path 'api/procesar_texto'.
+ERROR 2024-10-07 15:05:46,618 runserver 16524 26668 [35;1mHTTP OPTIONS /api/procesar_texto 500 [0.76, 127.0.0.1:41114][0m
+ERROR 2024-10-07 15:05:46,619 server 16524 26668 Exception inside application: No route found for path 'api/procesar_texto'.
+Traceback (most recent call last):
+  File "C:\Users\raton\OneDrive\Documentos\univ vks\7to Cuatri\ArqSoftware\testFlow\venv\Lib\site-packages\channels\staticfiles.py", line 44, in __call__
+    return await self.application(scope, receive, send)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\raton\OneDrive\Documentos\univ vks\7to Cuatri\ArqSoftware\testFlow\venv\Lib\site-packages\channels\routing.py", line 71, in __call__
+    return await application(scope, receive, send)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\raton\OneDrive\Documentos\univ vks\7to Cuatri\ArqSoftware\testFlow\venv\Lib\site-packages\channels\routing.py", line 168, in __call__
+    raise ValueError("No route found for path %r." % path)
+ValueError: No route found for path 'api/procesar_texto'.
+ERROR 2024-10-07 15:05:46,620 runserver 16524 26668 [35;1mHTTP OPTIONS /api/procesar_texto 500 [0.65, 127.0.0.1:41115][0m
+ERROR 2024-10-07 15:05:56,716 server 16524 26668 Exception inside application: No route found for path 'api/procesar_texto'.
+Traceback (most recent call last):
+  File "C:\Users\raton\OneDrive\Documentos\univ vks\7to Cuatri\ArqSoftware\testFlow\venv\Lib\site-packages\channels\staticfiles.py", line 44, in __call__
+    return await self.application(scope, receive, send)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\raton\OneDrive\Documentos\univ vks\7to Cuatri\ArqSoftware\testFlow\venv\Lib\site-packages\channels\routing.py", line 71, in __call__
+    return await application(scope, receive, send)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\raton\OneDrive\Documentos\univ vks\7to Cuatri\ArqSoftware\testFlow\venv\Lib\site-packages\channels\routing.py", line 168, in __call__
+    raise ValueError("No route found for path %r." % path)
+ValueError: No route found for path 'api/procesar_texto'.
+ERROR 2024-10-07 15:05:56,718 runserver 16524 26668 [35;1mHTTP OPTIONS /api/procesar_texto 500 [0.96, 127.0.0.1:41114][0m
+ERROR 2024-10-07 15:05:58,729 server 16524 26668 Exception inside application: No route found for path 'api/procesar_texto'.
+Traceback (most recent call last):
+  File "C:\Users\raton\OneDrive\Documentos\univ vks\7to Cuatri\ArqSoftware\testFlow\venv\Lib\site-packages\channels\staticfiles.py", line 44, in __call__
+    return await self.application(scope, receive, send)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\raton\OneDrive\Documentos\univ vks\7to Cuatri\ArqSoftware\testFlow\venv\Lib\site-packages\channels\routing.py", line 71, in __call__
+    return await application(scope, receive, send)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\raton\OneDrive\Documentos\univ vks\7to Cuatri\ArqSoftware\testFlow\venv\Lib\site-packages\channels\routing.py", line 168, in __call__
+    raise ValueError("No route found for path %r." % path)
+ValueError: No route found for path 'api/procesar_texto'.
+ERROR 2024-10-07 15:05:58,731 runserver 16524 26668 [35;1mHTTP OPTIONS /api/procesar_texto 500 [0.75, 127.0.0.1:41114][0m
+ERROR 2024-10-07 15:05:58,732 server 16524 26668 Exception inside application: No route found for path 'api/procesar_texto'.
+Traceback (most recent call last):
+  File "C:\Users\raton\OneDrive\Documentos\univ vks\7to Cuatri\ArqSoftware\testFlow\venv\Lib\site-packages\channels\staticfiles.py", line 44, in __call__
+    return await self.application(scope, receive, send)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\raton\OneDrive\Documentos\univ vks\7to Cuatri\ArqSoftware\testFlow\venv\Lib\site-packages\channels\routing.py", line 71, in __call__
+    return await application(scope, receive, send)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\raton\OneDrive\Documentos\univ vks\7to Cuatri\ArqSoftware\testFlow\venv\Lib\site-packages\channels\routing.py", line 168, in __call__
+    raise ValueError("No route found for path %r." % path)
+ValueError: No route found for path 'api/procesar_texto'.
+ERROR 2024-10-07 15:05:58,733 runserver 16524 26668 [35;1mHTTP OPTIONS /api/procesar_texto 500 [0.73, 127.0.0.1:41115][0m
+ERROR 2024-10-07 15:05:58,734 server 16524 26668 Exception inside application: No route found for path 'api/procesar_texto'.
+Traceback (most recent call last):
+  File "C:\Users\raton\OneDrive\Documentos\univ vks\7to Cuatri\ArqSoftware\testFlow\venv\Lib\site-packages\channels\staticfiles.py", line 44, in __call__
+    return await self.application(scope, receive, send)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\raton\OneDrive\Documentos\univ vks\7to Cuatri\ArqSoftware\testFlow\venv\Lib\site-packages\channels\routing.py", line 71, in __call__
+    return await application(scope, receive, send)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\raton\OneDrive\Documentos\univ vks\7to Cuatri\ArqSoftware\testFlow\venv\Lib\site-packages\channels\routing.py", line 168, in __call__
+    raise ValueError("No route found for path %r." % path)
+ValueError: No route found for path 'api/procesar_texto'.
+ERROR 2024-10-07 15:05:58,735 runserver 16524 26668 [35;1mHTTP OPTIONS /api/procesar_texto 500 [0.57, 127.0.0.1:41118][0m
+ERROR 2024-10-07 15:05:58,735 server 16524 26668 Exception inside application: No route found for path 'api/procesar_texto'.
+Traceback (most recent call last):
+  File "C:\Users\raton\OneDrive\Documentos\univ vks\7to Cuatri\ArqSoftware\testFlow\venv\Lib\site-packages\channels\staticfiles.py", line 44, in __call__
+    return await self.application(scope, receive, send)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\raton\OneDrive\Documentos\univ vks\7to Cuatri\ArqSoftware\testFlow\venv\Lib\site-packages\channels\routing.py", line 71, in __call__
+    return await application(scope, receive, send)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\raton\OneDrive\Documentos\univ vks\7to Cuatri\ArqSoftware\testFlow\venv\Lib\site-packages\channels\routing.py", line 168, in __call__
+    raise ValueError("No route found for path %r." % path)
+ValueError: No route found for path 'api/procesar_texto'.
+ERROR 2024-10-07 15:05:58,736 runserver 16524 26668 [35;1mHTTP OPTIONS /api/procesar_texto 500 [0.14, 127.0.0.1:41116][0m
+ERROR 2024-10-07 15:05:59,744 server 16524 26668 Exception inside application: No route found for path 'api/procesar_texto'.
+Traceback (most recent call last):
+  File "C:\Users\raton\OneDrive\Documentos\univ vks\7to Cuatri\ArqSoftware\testFlow\venv\Lib\site-packages\channels\staticfiles.py", line 44, in __call__
+    return await self.application(scope, receive, send)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\raton\OneDrive\Documentos\univ vks\7to Cuatri\ArqSoftware\testFlow\venv\Lib\site-packages\channels\routing.py", line 71, in __call__
+    return await application(scope, receive, send)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\raton\OneDrive\Documentos\univ vks\7to Cuatri\ArqSoftware\testFlow\venv\Lib\site-packages\channels\routing.py", line 168, in __call__
+    raise ValueError("No route found for path %r." % path)
+ValueError: No route found for path 'api/procesar_texto'.
+ERROR 2024-10-07 15:05:59,746 runserver 16524 26668 [35;1mHTTP OPTIONS /api/procesar_texto 500 [1.00, 127.0.0.1:41115][0m
+ERROR 2024-10-07 15:05:59,746 server 16524 26668 Exception inside application: No route found for path 'api/procesar_texto'.
+Traceback (most recent call last):
+  File "C:\Users\raton\OneDrive\Documentos\univ vks\7to Cuatri\ArqSoftware\testFlow\venv\Lib\site-packages\channels\staticfiles.py", line 44, in __call__
+    return await self.application(scope, receive, send)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\raton\OneDrive\Documentos\univ vks\7to Cuatri\ArqSoftware\testFlow\venv\Lib\site-packages\channels\routing.py", line 71, in __call__
+    return await application(scope, receive, send)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\raton\OneDrive\Documentos\univ vks\7to Cuatri\ArqSoftware\testFlow\venv\Lib\site-packages\channels\routing.py", line 168, in __call__
+    raise ValueError("No route found for path %r." % path)
+ValueError: No route found for path 'api/procesar_texto'.
+ERROR 2024-10-07 15:05:59,748 runserver 16524 26668 [35;1mHTTP OPTIONS /api/procesar_texto 500 [0.87, 127.0.0.1:41118][0m
+ERROR 2024-10-07 15:07:25,557 server 16524 26668 Exception inside application: 'dict' object has no attribute 'method'
+Traceback (most recent call last):
+  File "C:\Users\raton\OneDrive\Documentos\univ vks\7to Cuatri\ArqSoftware\testFlow\venv\Lib\site-packages\channels\staticfiles.py", line 44, in __call__
+    return await self.application(scope, receive, send)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\raton\OneDrive\Documentos\univ vks\7to Cuatri\ArqSoftware\testFlow\venv\Lib\site-packages\channels\routing.py", line 71, in __call__
+    return await application(scope, receive, send)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\raton\OneDrive\Documentos\univ vks\7to Cuatri\ArqSoftware\testFlow\venv\Lib\site-packages\channels\routing.py", line 150, in __call__
+    return await application(
+           ^^^^^^^^^^^^^^^^^^
+  File "C:\Users\raton\OneDrive\Documentos\univ vks\7to Cuatri\ArqSoftware\testFlow\venv\Lib\site-packages\asgiref\compatibility.py", line 34, in new_application
+    instance = application(scope)
+               ^^^^^^^^^^^^^^^^^^
+  File "C:\Users\raton\OneDrive\Documentos\univ vks\7to Cuatri\ArqSoftware\testFlow\venv\Lib\site-packages\django\views\decorators\csrf.py", line 65, in _view_wrapper
+    return view_func(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\raton\OneDrive\Documentos\univ vks\7to Cuatri\ArqSoftware\testFlow\backend\ai\views.py", line 401, in procesar_texto
+    if request.method != "POST":
+       ^^^^^^^^^^^^^^
+AttributeError: 'dict' object has no attribute 'method'
+ERROR 2024-10-07 15:07:25,568 runserver 16524 26668 [35;1mHTTP POST /api/procesar_texto/ 500 [0.83, 127.0.0.1:41675][0m
+INFO 2024-10-07 15:08:04,404 autoreload 16524 368 C:\Users\raton\OneDrive\Documentos\univ vks\7to Cuatri\ArqSoftware\testFlow\backend\testflow\asgi.py changed, reloading.
+INFO 2024-10-07 15:08:07,940 autoreload 25200 10436 Watching for file changes with StatReloader
+INFO 2024-10-07 15:08:17,114 model 25200 10436 Iniciando la carga del modelo de visión.
+INFO 2024-10-07 15:08:24,545 model 25200 10436 Modelo de visión cargado exitosamente.
+INFO 2024-10-07 15:08:25,167 views 25200 10436 Conexión exitosa a MongoDB en la uri
+INFO 2024-10-07 15:08:25,168 views 25200 10436 Conexión exitosa a Redis en redis-11043.c274.us-east-1-3.ec2.redns.redis-cloud.com:11043/0
+INFO 2024-10-07 15:08:25,313 server 25200 26228 HTTP/2 support not enabled (install the http2 and tls Twisted extras)
+INFO 2024-10-07 15:08:25,314 server 25200 26228 Configuring endpoint tcp:port=8000:interface=0.0.0.0
+INFO 2024-10-07 15:08:25,315 server 25200 26228 Listening on TCP address 0.0.0.0:8000
+INFO 2024-10-07 15:19:50,231 views 32152 10920 Hash de la imagen calculado: 60493cca91e2838519676df7238c110e
+INFO 2024-10-07 15:19:50,977 model 32152 13952 Procesando imagen con el modelo Im2Latex
+INFO 2024-10-07 15:19:50,978 model 32152 13952 Preprocesando la imagen
+INFO 2024-10-07 15:19:51,323 model 32152 13952 Preprocesamiento de imagen completado.
+ERROR 2024-10-07 15:20:15,387 model 32152 13952 Error al limpiar LaTeX: LaTeX parsing requires the antlr4 Python package, provided by pip (antlr4-python3-runtime) or conda (antlr-python-runtime), version 4.11
+INFO 2024-10-07 15:20:15,388 model 32152 13952 Fórmula LaTeX detectada: \begin{align*}&\overline{[\prod_{j=0}^\mathsf{H}\widetilde{\prob\limits_{\substack{\boldsymbol{y}\\\forall\,\widehat{b}=\smallskip\,}}]}\propto\!\!\procteenth\right.\\&\Bigg\lceil\underbrace{\root*[4]\of{}\rightarrow\left.\emptyset\Homodet}_{2\not=\smokerspace\exists2}\!{\sff}^{-1}\overleftarrow{\bigotimesab{z\in\root[2]{}\\\bigodot\sim\cdots\byapprox\hat{\Bigvee\nolimits}\sim}}\endINGSpace}\end{aligned}
+INFO 2024-10-07 15:20:15,388 model 32152 13952 Tipo de problema: Límite
+INFO 2024-10-07 15:20:15,390 views 32152 10920 Formula clasificada: \begin{align*}&\overline{[\prod_{j=0}^\mathsf{H}\widetilde{\prob\limits_{\substack{\boldsymbol{y}\\\forall\,\widehat{b}=\smallskip\,}}]}\propto\!\!\procteenth\right.\\&\Bigg\lceil\underbrace{\root*[4]\of{}\rightarrow\left.\emptyset\Homodet}_{2\not=\smokerspace\exists2}\!{\sff}^{-1}\overleftarrow{\bigotimesab{z\in\root[2]{}\\\bigodot\sim\cdots\byapprox\hat{\Bigvee\nolimits}\sim}}\endINGSpace}\end{aligned}, Tipo de problema: Límite
+ERROR 2024-10-07 15:20:16,122 model 32152 13952 Error al renderizar LaTeX a imagen: Matplotlib's TeX implementation searched for a file named 'cmr17.tfm' in your texmf tree, but could not find it
+ERROR 2024-10-07 15:20:16,123 views 32152 10920 Error al procesar el fotograma: 'NoneType' object has no attribute 'save'
+Traceback (most recent call last):
+  File "C:\Users\raton\OneDrive\Documentos\univ vks\7to Cuatri\ArqSoftware\testFlow\backend\ai\views.py", line 176, in procesar_fotograma
+    latex_image.save(buffered, format="PNG")
+    ^^^^^^^^^^^^^^^^
+AttributeError: 'NoneType' object has no attribute 'save'

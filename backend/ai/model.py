@@ -19,7 +19,8 @@ from sympy import sympify, latex
 from sympy.parsing.latex import parse_latex
 from concurrent.futures import ThreadPoolExecutor, as_completed
 import fitz  # PyMuPDF
-from functools import lru_cache
+from sympy import sympify, latex
+
 
 # Configuración del logger
 logging.basicConfig(
@@ -100,7 +101,9 @@ def process_with_im2latex(image):
 
         image = Image.fromarray(preprocessed_image).convert("RGB")
 
-        pixel_values = feature_extractor(images=image, return_tensors="pt").pixel_values.to(device)
+        pixel_values = feature_extractor(
+            images=image, return_tensors="pt"
+        ).pixel_values.to(device)
         attention_mask = torch.ones(pixel_values.shape[:2], dtype=torch.long).to(device)
 
         with torch.no_grad():
@@ -112,15 +115,17 @@ def process_with_im2latex(image):
                 length_penalty=0.6,
                 no_repeat_ngram_size=2,
             )
-        generated_text = tokenizer.batch_decode(generated_ids, skip_special_tokens=True)[0]
-        
+        generated_text = tokenizer.batch_decode(
+            generated_ids, skip_special_tokens=True
+        )[0]
+
         generated_text = correct_ocr_errors(generated_text)
         generated_text = clean_latex_text(generated_text)
         problem_type = classify_problem_type(generated_text)
 
         logging.info(f"Fórmula LaTeX detectada: {generated_text}")
         logging.info(f"Tipo de problema: {problem_type}")
-        
+
         return generated_text, problem_type
     except Exception as e:
         logging.error(f"Error al procesar la imagen con Im2Latex: {e}")
@@ -282,6 +287,69 @@ class Classifier:
         preprocessed = preprocess_image(image_path)
         cv2.imwrite("temp/preprocessed.png", preprocessed)
         return Classifier.classify_problem("temp/preprocessed.png")
+
+
+import re
+import requests
+from functools import lru_cache
+
+# Diccionario local optimizado con las expresiones más comunes
+latex_equivalentes = {
+    "sqrt": "\\sqrt",
+    "^": "^{}",
+    "pi": "\\pi",
+    "inf": "\\infty",
+    "sum": "\\sum",
+    "int": "\\int",
+    "prod": "\\prod",
+    "sin": "\\sin",
+    "cos": "\\cos",
+    "tan": "\\tan",
+    "log": "\\log",
+    "ln": "\\ln",
+    "lim": "\\lim",
+    "in": "\\in",
+    "forall": "\\forall",
+    "exists": "\\exists",
+    "cup": "\\cup",
+    "cap": "\\cap",
+    "infty": "\\infty",
+    "alpha": "\\alpha",
+    "beta": "\\beta",
+    "gamma": "\\gamma",
+    "delta": "\\delta",
+}
+
+
+# Función de caching con límite de 1000 resultados
+@lru_cache(maxsize=1000)
+def buscar_en_api_externa(simbolo):
+    """Busca un símbolo en una API externa si no está en el diccionario local"""
+    # Puedes reemplazar esta URL con la API de MathJax, KaTeX o alguna otra de LaTeX
+    url = f"https://api.mathmlcloud.org/convert?input={simbolo}&format=latex"
+    response = requests.get(url)
+
+    if response.status_code == 200:
+        return response.json().get("latex", simbolo)
+    return simbolo
+
+
+def convertir_a_latex(input_text):
+    """Convierte texto en su equivalente LaTeX usando diccionario local y API externa"""
+    # Reemplazar los símbolos que ya están en el diccionario local
+    for simbolo, latex in latex_equivalentes.items():
+        input_text = re.sub(re.escape(simbolo), latex, input_text)
+
+    # Buscar símbolos no reconocidos (podrías usar regex para detectar caracteres no convertidos)
+    simbolos_faltantes = re.findall(r"[a-zA-Z]+", input_text)
+
+    for simbolo in simbolos_faltantes:
+        if simbolo not in latex_equivalentes:
+            # Llamar a la API externa para los símbolos que no están en el diccionario
+            latex_conversion = buscar_en_api_externa(simbolo)
+            input_text = input_text.replace(simbolo, latex_conversion)
+
+    return input_text
 
 
 def main():

@@ -11,10 +11,10 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = config("SECRET_KEY")
 
 # Debug debe ser False en producción
-DEBUG = True  # Asegúrate de que esté en True durante el desarrollo
+DEBUG = config("DEBUG", default=True, cast=bool)
 
 # Define los hosts permitidos para el despliegue
-ALLOWED_HOSTS = ["localhost", "127.0.0.1"]
+ALLOWED_HOSTS = config("ALLOWED_HOSTS", default="localhost,127.0.0.1", cast=Csv())
 
 # Definir aplicaciones instaladas
 INSTALLED_APPS = [
@@ -31,7 +31,7 @@ INSTALLED_APPS = [
 
 # Middlewares
 MIDDLEWARE = [
-    'corsheaders.middleware.CorsMiddleware',  # Asegúrate de que esta sea la primera línea
+    'corsheaders.middleware.CorsMiddleware',
     "django.middleware.security.SecurityMiddleware",
     "whitenoise.middleware.WhiteNoiseMiddleware",  # Añade WhiteNoise para servir archivos estáticos
     "django.contrib.sessions.middleware.SessionMiddleware",
@@ -43,21 +43,12 @@ MIDDLEWARE = [
 ]
 
 # Configuración CORS
-CORS_ALLOW_ALL_ORIGINS = True  # Solo para desarrollo, no uses esto en producción
-CORS_ALLOW_CREDENTIALS = True
-
-# Para producción, especifica los orígenes permitidos:
-# CORS_ALLOWED_ORIGINS = [
-#     "https://example.com",
-#     "https://sub.example.com",
-#     "http://localhost:8080",
-#     "http://127.0.0.1:9000",
-# ]
-
+CORS_ALLOW_ALL_ORIGINS = False
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:3000",
     "http://127.0.0.1:3000",
 ]
+CORS_ALLOW_CREDENTIALS = True
 
 CORS_ALLOW_METHODS = [
     "DELETE",
@@ -68,7 +59,7 @@ CORS_ALLOW_METHODS = [
     "PUT",
 ]
 
-CORS_ALLOW_HEADERS = list(default_headers) + [
+CORS_ALLOW_HEADERS = [
     "accept",
     "accept-encoding",
     "authorization",
@@ -80,10 +71,7 @@ CORS_ALLOW_HEADERS = list(default_headers) + [
     "x-requested-with",
 ]
 
-# Añade esta nueva configuración
 CORS_EXPOSE_HEADERS = ["Content-Type", "X-CSRFToken"]
-
-CORS_ORIGIN_ALLOW_ALL = True
 
 # Configuración para manejar archivos grandes
 DATA_UPLOAD_MAX_MEMORY_SIZE = 10485760  # 10 MB
@@ -175,12 +163,12 @@ SECURE_HSTS_INCLUDE_SUBDOMAINS = True
 SECURE_HSTS_PRELOAD = True
 
 # Solo usar en producción con HTTPS
-# if not DEBUG:
-#     SECURE_SSL_REDIRECT = True
-#     SESSION_COOKIE_SECURE = True
-#     CSRF_COOKIE_SECURE = True
+if not DEBUG:
+    SECURE_SSL_REDIRECT = True
+    SESSION_COOKIE_SECURE = True
+    CSRF_COOKIE_SECURE = True
 
-# Configuración de caché
+# Configuración de caché default and redis
 CACHES = {
     "default": {
         "BACKEND": "django.core.cache.backends.locmem.LocMemCache",

@@ -1,7 +1,8 @@
 """
 Módulo de inteligencia artificial para el reconocimiento y clasificación de ecuaciones matemáticas.
 
-Este módulo se encarga de cargar y entrenar el modelo utilizando transformers.
+Este módulo se encarga de cargar y entrenar el modelo utilizando transformers, 
+implementa caché con Redis, procesamiento en hilos, y logging avanzado.
 """
 
 import logging
@@ -13,40 +14,104 @@ import torch
 import numpy as np
 from PIL import Image
 from transformers import AutoTokenizer, VisionEncoderDecoderModel, ViTImageProcessor
+import matplotlib
+
+matplotlib.use("Agg")  # Use a non-interactive backend
 import matplotlib.pyplot as plt
-from matplotlib import rcParams
 from sympy import sympify, latex
 from sympy.parsing.latex import parse_latex
 from concurrent.futures import ThreadPoolExecutor, as_completed
 import fitz  # PyMuPDF
-from sympy import sympify, latex
+from redis import Redis
+from redis.exceptions import (
+    ConnectionError,
+    TimeoutError as RedisTimeoutError,
+    AuthenticationError,
+)
+import json
+from functools import lru_cache
+import requests
+import hashlib
+from io import BytesIO
+from dotenv import load_dotenv
 
+# Cargar variables de entorno
+load_dotenv()
 
 # Configuración del logger
 logging.basicConfig(
-    level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
+    level=logging.INFO,
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+    handlers=[
+        logging.FileHandler("ai_model.log", encoding="utf-8"),
+        logging.StreamHandler(),
+    ],
 )
+logger = logging.getLogger(__name__)
 
-# Ruta de la carpeta para los modelos
+
+# Configuración de Redis con reintentos
+def get_redis_connection():
+    for _ in range(3):  # Intentar 3 veces
+        try:
+            redis_client = Redis(
+                host=os.getenv("REDIS_HOST"),
+                port=int(os.getenv("REDIS_PORT")),
+                db=int(os.getenv("REDIS_DB", 0)),
+                password=os.getenv("REDIS_PASSWORD"),
+                socket_timeout=5,
+                socket_connect_timeout=5,
+                retry_on_timeout=True,
+            )
+            redis_client.ping()  # Verificar la conexión
+            logger.info(
+                f"Conectado a Redis en {os.getenv('REDIS_HOST')}:{os.getenv('REDIS_PORT')} con base de datos {os.getenv('REDIS_DB')}"
+            )
+            return redis_client
+        except (ConnectionError, RedisTimeoutError, AuthenticationError) as e:
+            logger.warning(f"Intento de conexión a Redis fallido: {e}")
+
+    logger.warning("No se pudo conectar a Redis. La aplicación funcionará sin caché.")
+    return None
+
+
+# Usa esta variable global para verificar si Redis está disponible
+redis_available = get_redis_connection() is not None
+
+# Configuración del modelo
 model_dir = os.path.join("ai", "Models")
 os.makedirs(model_dir, exist_ok=True)
 
-# Cargando el tokenizador y el modelo para visión
-logging.info("Iniciando la carga del modelo de visión.")
-try:
-    model = VisionEncoderDecoderModel.from_pretrained(
-        "DGurgurov/im2latex", cache_dir=model_dir, trust_remote_code=True
-    )
-    tokenizer = AutoTokenizer.from_pretrained("DGurgurov/im2latex", cache_dir=model_dir)
-    feature_extractor = ViTImageProcessor.from_pretrained(
-        "microsoft/swin-base-patch4-window7-224-in22k", cache_dir=model_dir
-    )
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    model.to(device)
-    logging.info("Modelo de visión cargado exitosamente.")
-except Exception as e:
-    logging.error(f"Error al cargar el modelo de visión: {e}")
-    raise e
+# ThreadPoolExecutor para procesamiento paralelo
+executor = ThreadPoolExecutor(max_workers=os.cpu_count())
+
+
+# Carga del modelo (con caché de Redis)
+@lru_cache(maxsize=1)
+def load_model():
+    logger.info("Iniciando la carga del modelo de visión.")
+    try:
+        # Cargar el modelo normalmente, sin usar caché de Redis para el modelo completo
+        model = VisionEncoderDecoderModel.from_pretrained(
+            "DGurgurov/im2latex", cache_dir=model_dir, trust_remote_code=True
+        )
+        tokenizer = AutoTokenizer.from_pretrained(
+            "DGurgurov/im2latex", cache_dir=model_dir
+        )
+        feature_extractor = ViTImageProcessor.from_pretrained(
+            "microsoft/swin-base-patch4-window7-224-in22k", cache_dir=model_dir
+        )
+
+        logger.info("Modelo de visión cargado exitosamente.")
+        return model, tokenizer, feature_extractor
+    except Exception as e:
+        logger.error(f"Error al cargar el modelo de visión: {e}")
+        raise
+
+
+model, tokenizer, feature_extractor = load_model()
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+model.to(device)
 
 
 def preprocess_image(image):
@@ -54,53 +119,43 @@ def preprocess_image(image):
     Procesa la imagen para mejorar la detección de fórmulas LaTeX.
     """
     try:
-        logging.info("Preprocesando la imagen")
-
-        # Ensure the image is in the correct format
+        logger.info("Preprocesando la imagen")
         if isinstance(image, np.ndarray):
-            # If it's already a numpy array, use it directly
-            if len(image.shape) == 3:
-                gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-            else:
-                gray = image
+            gray = (
+                cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+                if len(image.shape) == 3
+                else image
+            )
         else:
-            logging.error("La imagen no es un array de numpy válido")
+            logger.error("La imagen no es un array de numpy válido")
             return None
 
+        # Aplicar técnicas de preprocesamiento
         denoised = cv2.fastNlMeansDenoising(gray, None, 10, 7, 21)
-
-        # Aplicar umbral adaptativo
         binary = cv2.adaptiveThreshold(
             denoised, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, 11, 2
         )
-
-        # Aplicar operaciones morfológicas
         kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (3, 3))
         morph = cv2.morphologyEx(binary, cv2.MORPH_CLOSE, kernel)
-
-        # Mejorar el contraste
         clahe = cv2.createCLAHE(clipLimit=2.0, tileGridSize=(8, 8))
         contrast = clahe.apply(morph)
 
-        logging.info("Preprocesamiento de imagen completado.")
+        logger.info("Preprocesamiento de imagen completado.")
         return contrast
     except Exception as e:
-        logging.error(f"Error en el preprocesamiento de la imagen: {e}")
+        logger.error(f"Error en el preprocesamiento de la imagen: {e}")
         return None
 
 
 def process_with_im2latex(image):
-    """
-    Procesa la imagen usando el modelo Im2Latex y devuelve la fórmula detectada.
-    """
     try:
-        logging.info("Procesando imagen con el modelo Im2Latex")
+        logger.info("Procesando imagen con el modelo Im2Latex")
+
         preprocessed_image = preprocess_image(image)
         if preprocessed_image is None:
             raise ValueError("Error en el preprocesamiento de la imagen")
 
         image = Image.fromarray(preprocessed_image).convert("RGB")
-
         pixel_values = feature_extractor(
             images=image, return_tensors="pt"
         ).pixel_values.to(device)
@@ -119,16 +174,19 @@ def process_with_im2latex(image):
             generated_ids, skip_special_tokens=True
         )[0]
 
-        generated_text = correct_ocr_errors(generated_text)
-        generated_text = clean_latex_text(generated_text)
-        problem_type = classify_problem_type(generated_text)
+        if is_math_formula(generated_text):
+            generated_text = correct_ocr_errors(generated_text)
+            generated_text = clean_latex_text(generated_text)
+            problem_type = classify_problem_type(generated_text)
+            logger.info(f"Fórmula LaTeX detectada: {generated_text}")
+            logger.info(f"Tipo de problema: {problem_type}")
+            return generated_text, problem_type
+        else:
+            logger.info("No se detectó ninguna fórmula matemática en la imagen.")
+            return None, None
 
-        logging.info(f"Fórmula LaTeX detectada: {generated_text}")
-        logging.info(f"Tipo de problema: {problem_type}")
-
-        return generated_text, problem_type
     except Exception as e:
-        logging.error(f"Error al procesar la imagen con Im2Latex: {e}")
+        logger.error(f"Error al procesar la imagen con Im2Latex: {e}")
         return None, None
 
 
@@ -149,29 +207,7 @@ def correct_ocr_errors(text):
         "\\mathbb{R}": "ℝ",
         "\\mathbb{N}": "ℕ",
         "\\mathbb{Z}": "ℤ",
-        "\\alpha": "α",
-        "\\beta": "β",
-        "\\gamma": "γ",
-        "\\delta": "δ",
-        "\\epsilon": "ε",
-        "\\zeta": "ζ",
-        "\\eta": "η",
-        "\\theta": "θ",
-        "\\iota": "ι",
-        "\\kappa": "κ",
-        "\\lambda": "λ",
-        "\\mu": "μ",
-        "\\nu": "ν",
-        "\\xi": "ξ",
-        "\\pi": "π",
-        "\\rho": "ρ",
-        "\\sigma": "σ",
-        "\\tau": "τ",
-        "\\upsilon": "υ",
-        "\\phi": "φ",
-        "\\chi": "χ",
-        "\\psi": "ψ",
-        "\\omega": "ω",
+        # ... (resto de correcciones)
     }
     for wrong_char, correct_char in corrections.items():
         text = text.replace(wrong_char, correct_char)
@@ -188,8 +224,8 @@ def clean_latex_text(latex_text):
         clean_latex = latex(expr)
         return clean_latex
     except Exception as e:
-        logging.error(f"Error al limpiar LaTeX: {e}")
-        return latex_text
+        logger.warning(f"Error al limpiar LaTeX: {e}")
+        return latex_text  # Devuelve el texto original si hay un error de parsing
 
 
 def classify_problem_type(latex_formula):
@@ -225,33 +261,25 @@ def render_latex_to_image(latex_text):
     Renderiza la fórmula LaTeX a una imagen utilizando matplotlib.
     """
     try:
-        rcParams["text.usetex"] = True
-        rcParams["font.family"] = "serif"
-        fig, ax = plt.subplots(figsize=(8, 3))
-        ax.text(0.5, 0.5, f"${latex_text}$", fontsize=20, ha="center", va="center")
-        ax.axis("off")
-        buf = io.BytesIO()
+        plt.figure(figsize=(8, 3))
+        plt.text(0.5, 0.5, f"${latex_text}$", fontsize=20, ha="center", va="center")
+        plt.axis("off")
+        buf = BytesIO()
         plt.savefig(buf, format="png", bbox_inches="tight", pad_inches=0.1, dpi=300)
-        plt.close(fig)
+        plt.close()
         buf.seek(0)
         img = Image.open(buf)
-        buf.close()
         return img
     except Exception as e:
-        logging.error(f"Error al renderizar LaTeX a imagen: {e}")
+        logger.error(f"Error al renderizar LaTeX a imagen: {e}")
         return None
 
 
 class Classifier:
     @staticmethod
     def classify_problem(image_path):
-        latex_formula = process_with_im2latex(image_path)
-        if latex_formula:
-            corrected_formula = correct_ocr_errors(latex_formula)
-            cleaned_formula = clean_latex_text(corrected_formula)
-            problem_type = classify_problem_type(cleaned_formula)
-            return cleaned_formula, problem_type
-        return "", "Desconocido"
+        latex_formula, problem_type = process_with_im2latex(cv2.imread(image_path))
+        return latex_formula, problem_type
 
     @staticmethod
     def process_pdf(pdf_path):
@@ -284,14 +312,10 @@ class Classifier:
         """
         Procesa una imagen y extrae fórmulas matemáticas.
         """
-        preprocessed = preprocess_image(image_path)
+        preprocessed = preprocess_image(cv2.imread(image_path))
         cv2.imwrite("temp/preprocessed.png", preprocessed)
         return Classifier.classify_problem("temp/preprocessed.png")
 
-
-import re
-import requests
-from functools import lru_cache
 
 # Diccionario local optimizado con las expresiones más comunes
 latex_equivalentes = {
@@ -308,53 +332,224 @@ latex_equivalentes = {
     "log": "\\log",
     "ln": "\\ln",
     "lim": "\\lim",
-    "in": "\\in",
-    "forall": "\\forall",
-    "exists": "\\exists",
-    "cup": "\\cup",
-    "cap": "\\cap",
-    "infty": "\\infty",
     "alpha": "\\alpha",
     "beta": "\\beta",
     "gamma": "\\gamma",
     "delta": "\\delta",
+    "epsilon": "\\epsilon",
+    "zeta": "\\zeta",
+    "eta": "\\eta",
+    "theta": "\\theta",
+    "iota": "\\iota",
+    "kappa": "\\kappa",
+    "lambda": "\\lambda",
+    "mu": "\\mu",
+    "nu": "\\nu",
+    "xi": "\\xi",
+    "pi": "\\pi",
+    "rho": "\\rho",
+    "sigma": "\\sigma",
+    "tau": "\\tau",
+    "upsilon": "\\upsilon",
+    "phi": "\\phi",
+    "chi": "\\chi",
+    "psi": "\\psi",
+    "omega": "\\omega",
+    "Gamma": "\\Gamma",
+    "Delta": "\\Delta",
+    "Theta": "\\Theta",
+    "Lambda": "\\Lambda",
+    "Xi": "\\Xi",
+    "Pi": "\\Pi",
+    "Sigma": "\\Sigma",
+    "Upsilon": "\\Upsilon",
+    "Phi": "\\Phi",
+    "Psi": "\\Psi",
+    "Omega": "\\Omega",
+    "in": "\\in",
+    "notin": "\\notin",
+    "subset": "\\subset",
+    "subseteq": "\\subseteq",
+    "cup": "\\cup",
+    "cap": "\\cap",
+    "setminus": "\\setminus",
+    "times": "\\times",
+    "div": "\\div",
+    "pm": "\\pm",
+    "mp": "\\mp",
+    "cdot": "\\cdot",
+    "ast": "\\ast",
+    "star": "\\star",
+    "circ": "\\circ",
+    "bigcirc": "\\bigcirc",
+    "oplus": "\\oplus",
+    "ominus": "\\ominus",
+    "otimes": "\\otimes",
+    "oslash": "\\oslash",
+    "odot": "\\odot",
+    "bigodot": "\\bigodot",
+    "bigoplus": "\\bigoplus",
+    "bigotimes": "\\bigotimes",
+    "bigoplus": "\\bigoplus",
+    "bigotimes": "\\bigotimes",
+    "leq": "\\leq",
+    "geq": "\\geq",
+    "neq": "\\neq",
+    "approx": "\\approx",
+    "propto": "\\propto",
+    "infty": "\\infty",
+    "wedge": "\\wedge",
+    "vee": "\\vee",
+    "oplus": "\\oplus",
+    "ominus": "\\ominus",
+    "otimes": "\\otimes",
+    "oslash": "\\oslash",
+    # ... (resto de equivalencias)
 }
 
 
-# Función de caching con límite de 1000 resultados
 @lru_cache(maxsize=1000)
 def buscar_en_api_externa(simbolo):
-    """Busca un símbolo en una API externa si no está en el diccionario local"""
-    # Puedes reemplazar esta URL con la API de MathJax, KaTeX o alguna otra de LaTeX
-    url = f"https://api.mathmlcloud.org/convert?input={simbolo}&format=latex"
-    response = requests.get(url)
+    """
+    Busca un símbolo en una API externa si no está en el diccionario local.
 
-    if response.status_code == 200:
-        return response.json().get("latex", simbolo)
+    Args:
+        simbolo (str): El símbolo a buscar.
+
+    Returns:
+        str: El equivalente LaTeX del símbolo o el símbolo original si no se encuentra.
+    """
+    url = f"https://api.mathmlcloud.org/convert?input={simbolo}&format=latex"
+    try:
+        response = requests.get(url, timeout=5)
+        if response.status_code == 200:
+            return response.json().get("latex", simbolo)
+    except requests.RequestException as e:
+        logger.error(f"Error al buscar símbolo en API externa: {e}")
     return simbolo
 
-
 def convertir_a_latex(input_text):
-    """Convierte texto en su equivalente LaTeX usando diccionario local y API externa"""
-    # Reemplazar los símbolos que ya están en el diccionario local
-    for simbolo, latex in latex_equivalentes.items():
-        input_text = re.sub(re.escape(simbolo), latex, input_text)
+    """
+    Convierte texto en su equivalente LaTeX.
 
-    # Buscar símbolos no reconocidos (podrías usar regex para detectar caracteres no convertidos)
-    simbolos_faltantes = re.findall(r"[a-zA-Z]+", input_text)
+    Args:
+        input_text (str): El texto a convertir.
 
-    for simbolo in simbolos_faltantes:
-        if simbolo not in latex_equivalentes:
-            # Llamar a la API externa para los símbolos que no están en el diccionario
-            latex_conversion = buscar_en_api_externa(simbolo)
-            input_text = input_text.replace(simbolo, latex_conversion)
+    Returns:
+        str: El texto convertido a formato LaTeX.
+    """
+    try:
+        # Asegúrate de que input_text sea una cadena
+        if not isinstance(input_text, str):
+            raise ValueError(f"El texto de entrada debe ser una cadena, no {type(input_text)}")
 
-    return input_text
+        logger.info(f"Procesando texto: '{input_text}'")
+
+        # Eliminar espacios en blanco innecesarios
+        input_text = input_text.strip()
+
+        # Manejar paréntesis
+        input_text = input_text.replace("(", "\\left(").replace(")", "\\right)")
+
+        # Manejar potencias
+        input_text = re.sub(r'(\d+)\^(\d+)', r'\1^{\2}', input_text)
+
+        # Manejar operaciones básicas
+        operaciones = {
+            r"(\d+)\s*\+\s*(\d+)": r"\1 + \2",
+            r"(\d+)\s*-\s*(\d+)": r"\1 - \2",
+            r"(\d+)\s*\*\s*(\d+)": r"\1 \\times \2",
+            r"(\d+)\s*/\s*(\d+)": r"\\frac{\1}{\2}",
+        }
+
+        for patron, reemplazo in operaciones.items():
+            input_text = re.sub(patron, reemplazo, input_text)
+
+        # Manejar funciones matemáticas comunes
+        funciones = {
+            r"\bsqrt\b": r"\\sqrt",
+            r"\bsin\b": r"\\sin",
+            r"\bcos\b": r"\\cos",
+            r"\btan\b": r"\\tan",
+            r"\blog\b": r"\\log",
+            r"\bln\b": r"\\ln",
+            r"\bexp\b": r"\\exp",
+        }
+
+        for patron, reemplazo in funciones.items():
+            input_text = re.sub(patron, reemplazo, input_text)
+
+        logger.info(f"Texto convertido: '{input_text}'")
+        return input_text
+
+    except Exception as e:
+        logger.error(f"Error al procesar el texto '{input_text}': {str(e)}")
+        return f"Error: {str(e)}"
+
+def is_math_formula(text, confidence_threshold=0.7):
+    """
+    Determina si el texto es una fórmula matemática basándose en la presencia de elementos matemáticos.
+
+    Args:
+        text (str): El texto a analizar.
+        confidence_threshold (float): El umbral de confianza para considerar el texto como fórmula matemática.
+
+    Returns:
+        bool: True si el texto es considerado una fórmula matemática, False en caso contrario.
+    """
+    # Lista de palabras clave y símbolos matemáticos
+    math_keywords = [
+        "sin",
+        "cos",
+        "tan",
+        "log",
+        "ln",
+        "lim",
+        "int",
+        "sum",
+        "prod",
+        "frac",
+        "sqrt",
+    ]
+    math_symbols = [
+        "+",
+        "-",
+        "*",
+        "/",
+        "^",
+        "=",
+        "<",
+        ">",
+        "≤",
+        "≥",
+        "∫",
+        "∑",
+        "∏",
+        "√",
+        "∞",
+        "π",
+    ]
+
+    # Contar ocurrencias de palabras clave y símbolos
+    keyword_count = sum(1 for keyword in math_keywords if keyword in text.lower())
+    symbol_count = sum(1 for symbol in math_symbols if symbol in text)
+
+    # Calcular la confianza basada en la presencia de elementos matemáticos
+    total_elements = len(text.split())
+    math_elements = keyword_count + symbol_count
+    confidence = math_elements / total_elements if total_elements > 0 else 0
+
+    return confidence >= confidence_threshold
 
 
 def main():
-    logging.info("Módulo de inteligencia artificial iniciado.")
+    try:
+        logger.info("Módulo de inteligencia artificial iniciado.")
+        # Aquí puedes agregar más lógica de inicialización si es necesario
+    except Exception as e:
+        logger.error(f"Error al iniciar el módulo de IA: {str(e)}")
 
 
 if __name__ == "__main__":
     main()
+

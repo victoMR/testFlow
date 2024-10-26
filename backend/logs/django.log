@@ -224,3 +224,159 @@ Traceback (most recent call last):
     latex_image.save(buffered, format="PNG")
     ^^^^^^^^^^^^^^^^
 AttributeError: 'NoneType' object has no attribute 'save'
+INFO 2024-10-19 14:20:57,275 views 29864 25520 Hash de la imagen calculado: 410cc3a7ccda00f17d62d0d4f897b4d8
+INFO 2024-10-19 14:20:57,995 model 29864 5568 Procesando imagen con el modelo Im2Latex
+INFO 2024-10-19 14:20:57,995 model 29864 5568 Preprocesando la imagen
+INFO 2024-10-19 14:20:58,290 model 29864 5568 Preprocesamiento de imagen completado.
+INFO 2024-10-19 14:21:01,456 views 29864 25520 Hash de la imagen calculado: a8f042714a36bc52577285620de2c950
+INFO 2024-10-19 14:21:01,557 model 29864 29120 Procesando imagen con el modelo Im2Latex
+INFO 2024-10-19 14:21:01,557 model 29864 29120 Preprocesando la imagen
+INFO 2024-10-19 14:21:01,989 model 29864 29120 Preprocesamiento de imagen completado.
+ERROR 2024-10-19 14:22:06,555 model 29864 29120 Error al limpiar LaTeX: LaTeX parsing requires the antlr4 Python package, provided by pip (antlr4-python3-runtime) or conda (antlr-python-runtime), version 4.11
+ERROR 2024-10-19 14:22:06,555 model 29864 5568 Error al limpiar LaTeX: LaTeX parsing requires the antlr4 Python package, provided by pip (antlr4-python3-runtime) or conda (antlr-python-runtime), version 4.11
+INFO 2024-10-19 14:22:06,595 model 29864 29120 Tipo de problema: Límite
+INFO 2024-10-19 14:22:06,598 model 29864 5568 Tipo de problema: Límite
+ERROR 2024-10-19 14:22:07,255 model 29864 5568 Error al renderizar LaTeX a imagen: <matplotlib.backends.backend_agg.RendererAgg object at 0x000001819D57FFE0>
+ERROR 2024-10-19 14:22:07,255 views 29864 25520 Error al procesar el fotograma: 'NoneType' object has no attribute 'save'
+Traceback (most recent call last):
+  File "C:\Users\raton\OneDrive\Documentos\univ vks\7to Cuatri\ArqSoftware\testFlow\backend\ai\views.py", line 176, in procesar_fotograma
+    latex_image.save(buffered, format="PNG")
+    ^^^^^^^^^^^^^^^^
+AttributeError: 'NoneType' object has no attribute 'save'
+ERROR 2024-10-19 14:22:09,338 model 29864 29120 Error al renderizar LaTeX a imagen: main thread is not in main loop
+ERROR 2024-10-19 14:22:09,338 views 29864 25520 Error al procesar el fotograma: 'NoneType' object has no attribute 'save'
+Traceback (most recent call last):
+  File "C:\Users\raton\OneDrive\Documentos\univ vks\7to Cuatri\ArqSoftware\testFlow\backend\ai\views.py", line 176, in procesar_fotograma
+    latex_image.save(buffered, format="PNG")
+    ^^^^^^^^^^^^^^^^
+AttributeError: 'NoneType' object has no attribute 'save'
+INFO 2024-10-19 14:49:59,967 views 29992 23108 Hash de la imagen calculado: 4841c2e53bee6c99f898db306637fbe6
+INFO 2024-10-19 14:50:00,639 model 29992 28476 Procesando imagen con el modelo Im2Latex
+INFO 2024-10-19 14:50:00,738 model 29992 28476 Preprocesando la imagen
+INFO 2024-10-19 14:50:01,065 model 29992 28476 Preprocesamiento de imagen completado.
+INFO 2024-10-19 14:50:33,957 model 29992 28476 Fórmula LaTeX detectada: begin
+INFO 2024-10-19 14:50:33,957 model 29992 28476 Tipo de problema: Expresión algebraica
+INFO 2024-10-19 14:50:33,957 views 29992 23108 Formula clasificada: begin, Tipo de problema: Expresión algebraica
+ERROR 2024-10-19 14:51:04,377 views 29992 23108 Error al procesar el fotograma: SSL handshake failed: testflowclouster-shard-00-02.wxv1v.mongodb.net:27017: [('SSL routines', '', 'tlsv1 alert internal error')] (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms),SSL handshake failed: testflowclouster-shard-00-01.wxv1v.mongodb.net:27017: [('SSL routines', '', 'tlsv1 alert internal error')] (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms),SSL handshake failed: testflowclouster-shard-00-00.wxv1v.mongodb.net:27017: [('SSL routines', '', 'tlsv1 alert internal error')] (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms), Timeout: 30s, Topology Description: <TopologyDescription id: 67141ade8a51c61202b5ad92, topology_type: ReplicaSetNoPrimary, servers: [<ServerDescription ('testflowclouster-shard-00-00.wxv1v.mongodb.net', 27017) server_type: Unknown, rtt: None, error=AutoReconnect("SSL handshake failed: testflowclouster-shard-00-00.wxv1v.mongodb.net:27017: [('SSL routines', '', 'tlsv1 alert internal error')] (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)")>, <ServerDescription ('testflowclouster-shard-00-01.wxv1v.mongodb.net', 27017) server_type: Unknown, rtt: None, error=AutoReconnect("SSL handshake failed: testflowclouster-shard-00-01.wxv1v.mongodb.net:27017: [('SSL routines', '', 'tlsv1 alert internal error')] (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)")>, <ServerDescription ('testflowclouster-shard-00-02.wxv1v.mongodb.net', 27017) server_type: Unknown, rtt: None, error=AutoReconnect("SSL handshake failed: testflowclouster-shard-00-02.wxv1v.mongodb.net:27017: [('SSL routines', '', 'tlsv1 alert internal error')] (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)")>]>
+INFO 2024-10-19 14:57:23,397 views 30564 26720 Hash de la imagen calculado: 330fdec343af86cbbf9018ca0a57891b
+INFO 2024-10-19 14:57:23,988 model 30564 25856 Procesando imagen con el modelo Im2Latex
+INFO 2024-10-19 14:57:23,988 model 30564 25856 Preprocesando la imagen
+INFO 2024-10-19 14:57:24,246 model 30564 25856 Preprocesamiento de imagen completado.
+INFO 2024-10-19 14:57:54,765 model 30564 25856 Fórmula LaTeX detectada: begin
+INFO 2024-10-19 14:57:54,765 model 30564 25856 Tipo de problema: Expresión algebraica
+INFO 2024-10-19 14:57:54,765 views 30564 26720 Formula clasificada: begin, Tipo de problema: Expresión algebraica
+ERROR 2024-10-19 14:58:25,058 views 30564 26720 Error al procesar el fotograma: SSL handshake failed: testflowclouster-shard-00-01.wxv1v.mongodb.net:27017: [('SSL routines', '', 'tlsv1 alert internal error')] (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms),SSL handshake failed: testflowclouster-shard-00-00.wxv1v.mongodb.net:27017: [('SSL routines', '', 'tlsv1 alert internal error')] (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms),SSL handshake failed: testflowclouster-shard-00-02.wxv1v.mongodb.net:27017: [('SSL routines', '', 'tlsv1 alert internal error')] (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms), Timeout: 30s, Topology Description: <TopologyDescription id: 67141d0aef84998935de10d7, topology_type: ReplicaSetNoPrimary, servers: [<ServerDescription ('testflowclouster-shard-00-00.wxv1v.mongodb.net', 27017) server_type: Unknown, rtt: None, error=AutoReconnect("SSL handshake failed: testflowclouster-shard-00-00.wxv1v.mongodb.net:27017: [('SSL routines', '', 'tlsv1 alert internal error')] (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)")>, <ServerDescription ('testflowclouster-shard-00-01.wxv1v.mongodb.net', 27017) server_type: Unknown, rtt: None, error=AutoReconnect("SSL handshake failed: testflowclouster-shard-00-01.wxv1v.mongodb.net:27017: [('SSL routines', '', 'tlsv1 alert internal error')] (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)")>, <ServerDescription ('testflowclouster-shard-00-02.wxv1v.mongodb.net', 27017) server_type: Unknown, rtt: None, error=AutoReconnect("SSL handshake failed: testflowclouster-shard-00-02.wxv1v.mongodb.net:27017: [('SSL routines', '', 'tlsv1 alert internal error')] (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)")>]>
+INFO 2024-10-19 15:02:35,382 views 29124 24748 Hash de la imagen calculado: b42b071a9ad0d9fe4f266d7927e4deb0
+INFO 2024-10-19 15:02:35,953 model 29124 18416 Procesando imagen con el modelo Im2Latex
+INFO 2024-10-19 15:02:35,953 model 29124 18416 Preprocesando la imagen
+INFO 2024-10-19 15:02:36,218 model 29124 18416 Preprocesamiento de imagen completado.
+INFO 2024-10-19 15:03:05,126 model 29124 18416 Fórmula LaTeX detectada: begin
+INFO 2024-10-19 15:03:05,126 model 29124 18416 Tipo de problema: Expresión algebraica
+INFO 2024-10-19 15:03:05,128 views 29124 24748 Formula clasificada: begin, Tipo de problema: Expresión algebraica
+ERROR 2024-10-19 15:03:06,071 views 29124 24748 Error al procesar el fotograma: Updating the path 'usos' would create a conflict at 'usos', full error: {'index': 0, 'code': 40, 'errmsg': "Updating the path 'usos' would create a conflict at 'usos'"}
+ERROR 2024-10-19 16:12:47,187 views 31832 32280 Error al procesar el texto: bad escape \s at position 0
+ERROR 2024-10-19 16:19:33,611 views 26724 31724 Error al procesar el texto: bad escape \s at position 0
+ERROR 2024-10-19 16:20:04,503 views 26724 31724 Error al procesar el texto: bad escape \s at position 0
+ERROR 2024-10-19 16:24:18,232 views 13988 19548 Error al procesar el texto: bad escape \s at position 0
+ERROR 2024-10-19 16:25:52,139 views 20884 27548 Error al procesar el texto: bad escape \s at position 0
+ERROR 2024-10-19 16:26:47,086 views 31128 16040 Error al procesar el texto: bad escape \s at position 0
+ERROR 2024-10-19 16:27:49,317 views 13932 6528 Error al procesar el texto: bad escape \s at position 0
+ERROR 2024-10-19 16:31:11,402 views 25760 2796 Error al procesar el texto: bad escape \s at position 0
+ERROR 2024-10-19 16:33:32,747 views 24640 23460 Error al procesar el texto: bad escape \s at position 0
+ERROR 2024-10-19 16:36:27,868 views 6892 29732 Error al procesar el texto: bad escape \s at position 0
+ERROR 2024-10-19 16:39:06,132 views 31568 13152 Error al procesar el texto: bad escape \s at position 0
+ERROR 2024-10-19 16:40:14,465 views 30548 15788 Error al procesar el texto: bad escape \s at position 0
+ERROR 2024-10-19 16:41:25,199 views 22956 13420 Error al procesar el texto: bad escape \s at position 0
+ERROR 2024-10-19 16:43:48,328 views 22588 23436 Error al procesar el texto: bad escape \s at position 0
+ERROR 2024-10-19 16:44:57,603 views 10440 32296 Error al procesar el texto: bad escape \s at position 0
+ERROR 2024-10-19 16:45:38,280 views 22788 19480 Error al procesar el texto: bad escape \s at position 0
+ERROR 2024-10-19 16:46:55,780 views 27108 25556 Error al procesar el texto: bad escape \s at position 0
+INFO 2024-10-19 16:49:45,310 model 15408 1068 Convirtiendo a LaTeX: 2
+ERROR 2024-10-19 16:49:45,316 views 15408 1068 Error al procesar el texto: bad escape \s at position 0
+INFO 2024-10-19 16:50:07,849 model 15408 1068 Convirtiendo a LaTeX: 2+2
+ERROR 2024-10-19 16:50:07,849 views 15408 1068 Error al procesar el texto: bad escape \s at position 0
+INFO 2024-10-19 16:51:35,753 model 15868 24808 Convirtiendo a LaTeX: 2
+ERROR 2024-10-19 16:51:35,753 views 15868 24808 Error al procesar el texto: bad escape \s at position 0
+INFO 2024-10-19 16:53:23,659 model 31548 15964 Convirtiendo a LaTeX: 2
+ERROR 2024-10-19 16:53:23,660 views 31548 15964 Error al procesar el texto: bad escape \s at position 0
+INFO 2024-10-19 16:54:49,464 views 13812 3032 Texto recibido: '2'
+INFO 2024-10-19 16:54:49,464 model 13812 3032 Procesando texto: '2'
+INFO 2024-10-19 16:54:49,464 views 13812 3032 LaTeX generado: '\left(2\right)'
+INFO 2024-10-19 16:54:51,689 views 13812 3032 Texto recibido: '2+2'
+INFO 2024-10-19 16:54:51,689 model 13812 3032 Procesando texto: '2+2'
+ERROR 2024-10-19 16:54:51,689 model 13812 3032 Error al procesar el texto '2 + 2': bad escape \s at position 0
+INFO 2024-10-19 16:54:51,689 views 13812 3032 LaTeX generado: 'Error: bad escape \s at position 0'
+INFO 2024-10-19 16:54:54,368 views 13812 3032 Texto recibido: '2'
+INFO 2024-10-19 16:54:54,374 model 13812 3032 Procesando texto: '2'
+INFO 2024-10-19 16:54:54,374 views 13812 3032 LaTeX generado: '\left(2\right)'
+INFO 2024-10-19 16:54:55,803 views 13812 3032 Texto recibido: '2^2'
+INFO 2024-10-19 16:54:55,803 model 13812 3032 Procesando texto: '2^2'
+ERROR 2024-10-19 16:54:55,804 model 13812 3032 Error al procesar el texto '2^{2}': bad escape \s at position 0
+INFO 2024-10-19 16:54:55,813 views 13812 3032 LaTeX generado: 'Error: bad escape \s at position 0'
+INFO 2024-10-19 16:55:01,381 views 13812 3032 Texto recibido: '2^'
+INFO 2024-10-19 16:55:01,381 model 13812 3032 Procesando texto: '2^'
+ERROR 2024-10-19 16:55:01,381 model 13812 3032 Error al procesar el texto '2^': bad escape \s at position 0
+INFO 2024-10-19 16:55:01,381 views 13812 3032 LaTeX generado: 'Error: bad escape \s at position 0'
+INFO 2024-10-19 16:55:01,397 views 13812 3032 Texto recibido: '2'
+INFO 2024-10-19 16:55:01,398 model 13812 3032 Procesando texto: '2'
+INFO 2024-10-19 16:55:01,399 views 13812 3032 LaTeX generado: '\left(2\right)'
+INFO 2024-10-19 16:55:05,499 views 13812 3032 Texto recibido: ''
+INFO 2024-10-19 16:55:05,499 model 13812 3032 Procesando texto: ''
+ERROR 2024-10-19 16:55:05,499 model 13812 3032 Error al procesar el texto '': bad escape \s at position 0
+INFO 2024-10-19 16:55:05,499 views 13812 3032 LaTeX generado: 'Error: bad escape \s at position 0'
+INFO 2024-10-19 16:55:07,379 views 13812 3032 Texto recibido: '('
+INFO 2024-10-19 16:55:07,379 model 13812 3032 Procesando texto: '('
+ERROR 2024-10-19 16:55:07,379 model 13812 3032 Error al procesar el texto '(': bad escape \s at position 0
+INFO 2024-10-19 16:55:07,379 views 13812 3032 LaTeX generado: 'Error: bad escape \s at position 0'
+INFO 2024-10-19 16:55:08,583 views 13812 3032 Texto recibido: '(2'
+INFO 2024-10-19 16:55:08,583 model 13812 3032 Procesando texto: '(2'
+ERROR 2024-10-19 16:55:08,583 model 13812 3032 Error al procesar el texto '(2': bad escape \s at position 0
+INFO 2024-10-19 16:55:08,583 views 13812 3032 LaTeX generado: 'Error: bad escape \s at position 0'
+INFO 2024-10-19 16:55:10,513 views 13812 3032 Texto recibido: '(2"'
+INFO 2024-10-19 16:55:10,513 model 13812 3032 Procesando texto: '(2"'
+ERROR 2024-10-19 16:55:10,513 model 13812 3032 Error al procesar el texto '(2"': bad escape \s at position 0
+INFO 2024-10-19 16:55:10,513 views 13812 3032 LaTeX generado: 'Error: bad escape \s at position 0'
+INFO 2024-10-19 16:55:11,012 views 13812 3032 Texto recibido: '(2'
+INFO 2024-10-19 16:55:11,012 model 13812 3032 Procesando texto: '(2'
+ERROR 2024-10-19 16:55:11,012 model 13812 3032 Error al procesar el texto '(2': bad escape \s at position 0
+INFO 2024-10-19 16:55:11,012 views 13812 3032 LaTeX generado: 'Error: bad escape \s at position 0'
+INFO 2024-10-19 16:55:12,785 views 13812 3032 Texto recibido: '(2^2'
+INFO 2024-10-19 16:55:12,785 model 13812 3032 Procesando texto: '(2^2'
+ERROR 2024-10-19 16:55:12,785 model 13812 3032 Error al procesar el texto '(2^{2}': bad escape \s at position 0
+INFO 2024-10-19 16:55:12,785 views 13812 3032 LaTeX generado: 'Error: bad escape \s at position 0'
+INFO 2024-10-19 16:55:13,771 views 13812 3032 Texto recibido: '(2^2)'
+INFO 2024-10-19 16:55:13,772 model 13812 3032 Procesando texto: '(2^2)'
+ERROR 2024-10-19 16:55:13,772 model 13812 3032 Error al procesar el texto '(2^{2})': bad escape \s at position 0
+INFO 2024-10-19 16:55:13,772 views 13812 3032 LaTeX generado: 'Error: bad escape \s at position 0'
+INFO 2024-10-19 16:56:33,447 views 31368 30268 Texto recibido: '2'
+INFO 2024-10-19 16:56:33,447 model 31368 30268 Procesando texto: '2'
+INFO 2024-10-19 16:56:33,447 model 31368 30268 Texto convertido: '2'
+INFO 2024-10-19 16:56:33,447 views 31368 30268 LaTeX generado: '2'
+INFO 2024-10-19 16:56:36,099 views 31368 30268 Texto recibido: '2{2'
+INFO 2024-10-19 16:56:36,099 model 31368 30268 Procesando texto: '2{2'
+INFO 2024-10-19 16:56:36,099 model 31368 30268 Texto convertido: '2{2'
+INFO 2024-10-19 16:56:36,099 views 31368 30268 LaTeX generado: '2{2'
+INFO 2024-10-19 16:56:37,899 views 31368 30268 Texto recibido: '2'
+INFO 2024-10-19 16:56:37,900 model 31368 30268 Procesando texto: '2'
+INFO 2024-10-19 16:56:37,900 model 31368 30268 Texto convertido: '2'
+INFO 2024-10-19 16:56:37,900 views 31368 30268 LaTeX generado: '2'
+INFO 2024-10-19 16:56:39,587 views 31368 30268 Texto recibido: '2^2'
+INFO 2024-10-19 16:56:39,596 model 31368 30268 Procesando texto: '2^2'
+INFO 2024-10-19 16:56:39,596 model 31368 30268 Texto convertido: '2^{2}'
+INFO 2024-10-19 16:56:39,596 views 31368 30268 LaTeX generado: '2^{2}'
+INFO 2024-10-19 16:56:41,395 views 31368 30268 Texto recibido: '2^2+'
+INFO 2024-10-19 16:56:41,395 model 31368 30268 Procesando texto: '2^2+'
+INFO 2024-10-19 16:56:41,395 model 31368 30268 Texto convertido: '2^{2}+'
+INFO 2024-10-19 16:56:41,395 views 31368 30268 LaTeX generado: '2^{2}+'
+INFO 2024-10-19 16:56:41,757 views 31368 30268 Texto recibido: '2^2+2'
+INFO 2024-10-19 16:56:41,757 model 31368 30268 Procesando texto: '2^2+2'
+INFO 2024-10-19 16:56:41,757 model 31368 30268 Texto convertido: '2^{2}+2'
+INFO 2024-10-19 16:56:41,757 views 31368 30268 LaTeX generado: '2^{2}+2'
+INFO 2024-10-19 17:14:52,075 views 31368 30268 Texto recibido: '2'
+INFO 2024-10-19 17:14:52,078 model 31368 30268 Procesando texto: '2'
+INFO 2024-10-19 17:14:52,079 model 31368 30268 Texto convertido: '2'
+INFO 2024-10-19 17:14:52,080 views 31368 30268 LaTeX generado: '2'
+INFO 2024-10-19 17:14:52,563 views 31368 30268 Texto recibido: '2^2'
+INFO 2024-10-19 17:14:52,563 model 31368 30268 Procesando texto: '2^2'
+INFO 2024-10-19 17:14:52,563 model 31368 30268 Texto convertido: '2^{2}'
+INFO 2024-10-19 17:14:52,564 views 31368 30268 LaTeX generado: '2^{2}'

@@ -158,8 +158,17 @@ async def procesar_fotograma(scope, receive, send):
             raise ValueError("No se pudo decodificar la imagen")
 
         processed_result = await asyncio.to_thread(process_with_im2latex, img)
-        if processed_result is None:
-            raise ValueError("Error al procesar la imagen con Im2Latex")
+        if processed_result is None or processed_result[0] is None:
+            await send({
+                "type": "http.response.start",
+                "status": 404,
+                "headers": [(b"content-type", b"application/json")],
+            })
+            await send({
+                "type": "http.response.body",
+                "body": json.dumps({"message": "No se detectó ninguna fórmula matemática en la imagen."}).encode(),
+            })
+            return
 
         # Asumimos que process_with_im2latex ahora devuelve una tupla (formula, tipo)
         cleaned_formula, problem_type = processed_result
@@ -169,32 +178,35 @@ async def procesar_fotograma(scope, receive, send):
         )
 
         if cleaned_formula:
-            latex_image = await asyncio.to_thread(
-                render_latex_to_image, cleaned_formula
-            )
-            buffered = io.BytesIO()
-            latex_image.save(buffered, format="PNG")
-            img_str = base64.b64encode(buffered.getvalue()).decode()
+            latex_image = await asyncio.to_thread(render_latex_to_image, cleaned_formula)
+            if latex_image:
+                buffered = io.BytesIO()
+                latex_image.save(buffered, format="PNG")
+                img_str = base64.b64encode(buffered.getvalue()).decode()
+            else:
+                img_str = ""
 
-            result = await asyncio.to_thread(
-                collection.update_one,
-                {"formula": cleaned_formula},
-                {
-                    "$setOnInsert": {
-                        "formula": cleaned_formula,
-                        "tipo": problem_type,
-                        "usos": 0,
+            try:
+                result = await asyncio.to_thread(
+                    collection.update_one,
+                    {"formula": cleaned_formula},
+                    {
+                        "$set": {
+                            "tipo": problem_type,
+                        },
+                        "$inc": {"usos": 1},
                     },
-                    "$inc": {"usos": 1},
-                },
-                upsert=True,
-            )
+                    upsert=True,
+                )
 
-            message = (
-                "Nuevo problema detectado y agregado a la base de datos."
-                if result.upserted_id
-                else "Problema existente actualizado en la base de datos."
-            )
+                message = (
+                    "Nuevo problema detectado y agregado a la base de datos."
+                    if result.upserted_id
+                    else "Problema existente actualizado en la base de datos."
+                )
+            except Exception as db_error:
+                logger.error(f"Error al actualizar la base de datos: {str(db_error)}")
+                message = "Error al actualizar la base de datos."
 
             response_data = {
                 "formula": cleaned_formula,
@@ -205,7 +217,8 @@ async def procesar_fotograma(scope, receive, send):
 
             json_response = json.dumps(response_data)
 
-            redis_client.setex(img_hash, settings.CACHE_TIMEOUT, json_response)
+            if redis_client:
+                redis_client.setex(img_hash, settings.CACHE_TIMEOUT, json_response)
 
             await send(
                 {
@@ -233,20 +246,16 @@ async def procesar_fotograma(scope, receive, send):
         )
 
     except Exception as e:
-        logger.error(f"Error al procesar el fotograma: {str(e)}", exc_info=True)
-        await send(
-            {
-                "type": "http.response.start",
-                "status": 500,
-                "headers": [(b"content-type", b"text/plain")],
-            }
-        )
-        await send(
-            {
-                "type": "http.response.body",
-                "body": f"Error interno del servidor al procesar el fotograma: {str(e)}".encode(),
-            }
-        )
+        logger.error(f"Error al procesar el fotograma: {str(e)}")
+        await send({
+            "type": "http.response.start",
+            "status": 500,
+            "headers": [(b"content-type", b"application/json")],
+        })
+        await send({
+            "type": "http.response.body",
+            "body": json.dumps({"error": f"Error al procesar el fotograma: {str(e)}"}).encode(),
+        })
 
 
 async def procesar_pdf(scope, receive, send):
@@ -395,28 +404,94 @@ async def procesar_imagen(scope, receive, send):
             os.remove(temp_file_path)
 
 
-@csrf_exempt  # Para desactivar CSRF en esta vista (usualmente en desarrollo)
-def procesar_texto(request):
-    # Verificar que la solicitud es POST
-    if request.method != "POST":
-        return JsonResponse({"error": "Método no permitido"}, status=405)
+async def procesar_texto(scope, receive, send):
+    if scope['method'] == 'OPTIONS':
+        await send({
+            'type': 'http.response.start',
+            'status': 200,
+            'headers': [
+                (b'content-type', b'application/json'),
+                (b'access-control-allow-origin', b'http://localhost:3000'),
+                (b'access-control-allow-methods', b'POST, OPTIONS'),
+                (b'access-control-allow-headers', b'Content-Type'),
+                (b'access-control-allow-credentials', b'true'),
+            ],
+        })
+        await send({
+            'type': 'http.response.body',
+            'body': b'',
+        })
+        return
+
+    if scope['method'] != 'POST':
+        await send({
+            'type': 'http.response.start',
+            'status': 405,
+            'headers': [(b'content-type', b'application/json')],
+        })
+        await send({
+            'type': 'http.response.body',
+            'body': json.dumps({"error": "Método no permitido"}).encode(),
+        })
+        return
+
+    body = b''
+    more_body = True
+    while more_body:
+        message = await receive()
+        body += message.get('body', b'')
+        more_body = message.get('more_body', False)
 
     try:
-        # Cargar el contenido del cuerpo de la solicitud JSON
-        data = json.loads(request.body)
-        texto = data.get("texto", "")  # Obtener el texto del cuerpo de la solicitud
+        data = json.loads(body)
+        texto = data.get("texto", "")
+
+        logger.info(f"Texto recibido: '{texto}'")
 
         # Convertir el texto a LaTeX
         latex = convertir_a_latex(texto)
 
+        logger.info(f"LaTeX generado: '{latex}'")
+
         # Responder con el resultado en formato JSON
-        return JsonResponse({"latex": latex}, status=200)
+        response_data = json.dumps({"latex": latex})
+        await send({
+            'type': 'http.response.start',
+            'status': 200,
+            'headers': [
+                (b'content-type', b'application/json'),
+                (b'access-control-allow-origin', b'http://localhost:3000'),
+                (b'access-control-allow-credentials', b'true'),
+            ],
+        })
+        await send({
+            'type': 'http.response.body',
+            'body': response_data.encode(),
+        })
 
     except json.JSONDecodeError:
-        return JsonResponse({"error": "JSON inválido"}, status=400)
+        logger.error("Error: JSON inválido")
+        await send({
+            'type': 'http.response.start',
+            'status': 400,
+            'headers': [(b'content-type', b'application/json')],
+        })
+        await send({
+            'type': 'http.response.body',
+            'body': json.dumps({"error": "JSON inválido"}).encode(),
+        })
 
     except Exception as e:
-        return JsonResponse({"error": str(e)}, status=500)
+        logger.error(f"Error al procesar el texto: {str(e)}")
+        await send({
+            'type': 'http.response.start',
+            'status': 500,
+            'headers': [(b'content-type', b'application/json')],
+        })
+        await send({
+            'type': 'http.response.body',
+            'body': json.dumps({"error": str(e)}).encode(),
+        })
 
 
 # Función para manejar el cierre del ThreadPoolExecutor
@@ -428,3 +503,25 @@ def cleanup():
 import atexit
 
 atexit.register(cleanup)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

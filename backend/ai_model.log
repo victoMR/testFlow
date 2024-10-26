@@ -1,0 +1,194 @@
+2024-10-19 14:29:58,841 - ai.model - INFO - Iniciando la carga del modelo de visi�n.
+2024-10-19 14:30:02,912 - ai.model - ERROR - Error al cargar el modelo de visi�n: Error 10061 connecting to localhost:6379. No se puede establecer una conexi�n ya que el equipo de destino deneg� expresamente dicha conexi�n.
+2024-10-19 14:30:53,596 - ai.model - INFO - Conectado a Redis en localhost:6379 con base de datos 0
+2024-10-19 14:30:53,596 - ai.model - INFO - Iniciando la carga del modelo de visi�n.
+2024-10-19 14:30:57,673 - ai.model - ERROR - Error al cargar el modelo de visi�n: Error 10061 connecting to localhost:6379. No se puede establecer una conexi�n ya que el equipo de destino deneg� expresamente dicha conexi�n.
+2024-10-19 14:31:53,229 - ai.model - INFO - Conectado a Redis en redis-11043.c274.us-east-1-3.ec2.redns.redis-cloud.com:11043 con base de datos 0
+2024-10-19 14:31:53,229 - ai.model - INFO - Iniciando la carga del modelo de visi�n.
+2024-10-19 14:32:14,466 - ai.model - ERROR - Error al cargar el modelo de visi�n: Timeout connecting to server
+2024-10-19 14:39:03,185 - ai.model - WARNING - Intento de conexión a Redis fallido: Authentication required
+2024-10-19 14:39:03,386 - ai.model - WARNING - Intento de conexión a Redis fallido: Authentication required
+2024-10-19 14:39:03,571 - ai.model - WARNING - Intento de conexión a Redis fallido: Authentication required
+2024-10-19 14:39:03,571 - ai.model - ERROR - No se pudo conectar a Redis después de varios intentos
+2024-10-19 14:39:03,571 - ai.model - INFO - Iniciando la carga del modelo de visión.
+2024-10-19 14:39:11,776 - ai.model - INFO - Modelo de visión cargado exitosamente.
+2024-10-19 14:39:12,220 - ai.views - INFO - Conexión exitosa a MongoDB en la uri
+2024-10-19 14:39:12,220 - ai.views - INFO - Conexión exitosa a Redis en redis-11043.c274.us-east-1-3.ec2.redns.redis-cloud.com:11043/0
+2024-10-19 14:45:36,509 - ai.model - INFO - Conectado a Redis en redis-11043.c274.us-east-1-3.ec2.redns.redis-cloud.com:11043 con base de datos None
+2024-10-19 14:45:36,509 - ai.model - INFO - Iniciando la carga del modelo de visión.
+2024-10-19 14:45:48,542 - ai.model - ERROR - Error al cargar el modelo de visión: Protocol error: invalid bulk length 990973096
+2024-10-19 14:47:16,993 - ai.model - INFO - Conectado a Redis en redis-11043.c274.us-east-1-3.ec2.redns.redis-cloud.com:11043 con base de datos None
+2024-10-19 14:47:16,993 - ai.model - INFO - Iniciando la carga del modelo de visión.
+2024-10-19 14:47:25,618 - ai.model - INFO - Modelo de visión cargado exitosamente.
+2024-10-19 14:47:26,040 - ai.views - INFO - Conexión exitosa a MongoDB en la uri
+2024-10-19 14:47:26,041 - ai.views - INFO - Conexión exitosa a Redis en redis-11043.c274.us-east-1-3.ec2.redns.redis-cloud.com:11043/0
+2024-10-19 14:56:35,042 - ai.model - INFO - Conectado a Redis en redis-11043.c274.us-east-1-3.ec2.redns.redis-cloud.com:11043 con base de datos None
+2024-10-19 14:56:35,042 - ai.model - INFO - Iniciando la carga del modelo de visión.
+2024-10-19 14:56:42,574 - ai.model - INFO - Modelo de visión cargado exitosamente.
+2024-10-19 14:56:42,918 - ai.views - INFO - Conexión exitosa a MongoDB en la uri
+2024-10-19 14:56:42,918 - ai.views - INFO - Conexión exitosa a Redis en redis-11043.c274.us-east-1-3.ec2.redns.redis-cloud.com:11043/0
+2024-10-19 15:01:58,985 - ai.model - INFO - Conectado a Redis en redis-11043.c274.us-east-1-3.ec2.redns.redis-cloud.com:11043 con base de datos None
+2024-10-19 15:01:59,000 - ai.model - INFO - Iniciando la carga del modelo de visión.
+2024-10-19 15:02:06,641 - ai.model - INFO - Modelo de visión cargado exitosamente.
+2024-10-19 15:02:07,049 - ai.views - INFO - Conexión exitosa a MongoDB en la uri
+2024-10-19 15:02:07,050 - ai.views - INFO - Conexión exitosa a Redis en redis-11043.c274.us-east-1-3.ec2.redns.redis-cloud.com:11043/0
+2024-10-19 15:20:56,611 - ai.model - INFO - Conectado a Redis en redis-11043.c274.us-east-1-3.ec2.redns.redis-cloud.com:11043 con base de datos None
+2024-10-19 15:20:56,611 - ai.model - INFO - Iniciando la carga del modelo de visión.
+2024-10-19 15:21:05,349 - ai.model - INFO - Modelo de visión cargado exitosamente.
+2024-10-19 15:21:06,046 - ai.views - INFO - Conexión exitosa a MongoDB en la uri
+2024-10-19 15:21:06,046 - ai.views - INFO - Conexión exitosa a Redis en redis-11043.c274.us-east-1-3.ec2.redns.redis-cloud.com:11043/0
+2024-10-19 15:30:12,384 - ai.model - INFO - Conectado a Redis en redis-11043.c274.us-east-1-3.ec2.redns.redis-cloud.com:11043 con base de datos None
+2024-10-19 15:30:12,384 - ai.model - INFO - Iniciando la carga del modelo de visión.
+2024-10-19 15:30:19,885 - ai.model - INFO - Modelo de visión cargado exitosamente.
+2024-10-19 15:30:20,333 - ai.views - INFO - Conexión exitosa a MongoDB en la uri
+2024-10-19 15:30:20,333 - ai.views - INFO - Conexión exitosa a Redis en redis-11043.c274.us-east-1-3.ec2.redns.redis-cloud.com:11043/0
+2024-10-19 15:32:18,337 - ai.model - INFO - Conectado a Redis en redis-11043.c274.us-east-1-3.ec2.redns.redis-cloud.com:11043 con base de datos None
+2024-10-19 15:32:18,337 - ai.model - INFO - Iniciando la carga del modelo de visión.
+2024-10-19 15:32:25,628 - ai.model - INFO - Modelo de visión cargado exitosamente.
+2024-10-19 15:32:26,061 - ai.views - INFO - Conexión exitosa a MongoDB en la uri
+2024-10-19 15:32:26,061 - ai.views - INFO - Conexión exitosa a Redis en redis-11043.c274.us-east-1-3.ec2.redns.redis-cloud.com:11043/0
+2024-10-19 15:34:36,054 - ai.model - INFO - Conectado a Redis en redis-11043.c274.us-east-1-3.ec2.redns.redis-cloud.com:11043 con base de datos None
+2024-10-19 15:34:36,054 - ai.model - INFO - Iniciando la carga del modelo de visión.
+2024-10-19 15:34:43,245 - ai.model - INFO - Modelo de visión cargado exitosamente.
+2024-10-19 15:34:43,663 - ai.views - INFO - Conexión exitosa a MongoDB en la uri
+2024-10-19 15:34:43,667 - ai.views - INFO - Conexión exitosa a Redis en redis-11043.c274.us-east-1-3.ec2.redns.redis-cloud.com:11043/0
+2024-10-19 15:45:55,078 - ai.model - INFO - Conectado a Redis en redis-11043.c274.us-east-1-3.ec2.redns.redis-cloud.com:11043 con base de datos None
+2024-10-19 15:45:55,093 - ai.model - INFO - Iniciando la carga del modelo de visión.
+2024-10-19 15:46:02,682 - ai.model - INFO - Modelo de visión cargado exitosamente.
+2024-10-19 15:46:03,062 - ai.views - INFO - Conexión exitosa a MongoDB en la uri
+2024-10-19 15:46:03,062 - ai.views - INFO - Conexión exitosa a Redis en redis-11043.c274.us-east-1-3.ec2.redns.redis-cloud.com:11043/0
+2024-10-19 15:55:58,565 - ai.model - INFO - Conectado a Redis en redis-11043.c274.us-east-1-3.ec2.redns.redis-cloud.com:11043 con base de datos None
+2024-10-19 15:55:58,565 - ai.model - INFO - Iniciando la carga del modelo de visión.
+2024-10-19 15:56:06,803 - ai.model - INFO - Modelo de visión cargado exitosamente.
+2024-10-19 15:56:07,491 - ai.views - INFO - Conexión exitosa a MongoDB en la uri
+2024-10-19 15:56:07,491 - ai.views - INFO - Conexión exitosa a Redis en redis-11043.c274.us-east-1-3.ec2.redns.redis-cloud.com:11043/0
+2024-10-19 16:00:21,638 - ai.model - INFO - Conectado a Redis en redis-11043.c274.us-east-1-3.ec2.redns.redis-cloud.com:11043 con base de datos None
+2024-10-19 16:00:21,654 - ai.model - INFO - Iniciando la carga del modelo de visión.
+2024-10-19 16:00:28,998 - ai.model - INFO - Modelo de visión cargado exitosamente.
+2024-10-19 16:00:29,359 - ai.views - INFO - Conexión exitosa a MongoDB en la uri
+2024-10-19 16:00:29,360 - ai.views - INFO - Conexión exitosa a Redis en redis-11043.c274.us-east-1-3.ec2.redns.redis-cloud.com:11043/0
+2024-10-19 16:08:58,070 - ai.model - INFO - Conectado a Redis en redis-11043.c274.us-east-1-3.ec2.redns.redis-cloud.com:11043 con base de datos None
+2024-10-19 16:08:58,074 - ai.model - INFO - Iniciando la carga del modelo de visión.
+2024-10-19 16:09:04,982 - ai.model - INFO - Modelo de visión cargado exitosamente.
+2024-10-19 16:09:05,339 - ai.views - INFO - Conexión exitosa a MongoDB en la uri
+2024-10-19 16:09:05,339 - ai.views - INFO - Conexión exitosa a Redis en redis-11043.c274.us-east-1-3.ec2.redns.redis-cloud.com:11043/0
+2024-10-19 16:12:30,186 - ai.model - INFO - Conectado a Redis en redis-11043.c274.us-east-1-3.ec2.redns.redis-cloud.com:11043 con base de datos None
+2024-10-19 16:12:30,186 - ai.model - INFO - Iniciando la carga del modelo de visión.
+2024-10-19 16:12:36,585 - ai.model - INFO - Modelo de visión cargado exitosamente.
+2024-10-19 16:12:37,005 - ai.views - INFO - Conexión exitosa a MongoDB en la uri
+2024-10-19 16:12:37,005 - ai.views - INFO - Conexión exitosa a Redis en redis-11043.c274.us-east-1-3.ec2.redns.redis-cloud.com:11043/0
+2024-10-19 16:14:41,947 - ai.model - INFO - Conectado a Redis en redis-11043.c274.us-east-1-3.ec2.redns.redis-cloud.com:11043 con base de datos None
+2024-10-19 16:14:41,947 - ai.model - INFO - Iniciando la carga del modelo de visión.
+2024-10-19 16:14:49,451 - ai.model - INFO - Modelo de visión cargado exitosamente.
+2024-10-19 16:14:49,897 - ai.views - INFO - Conexión exitosa a MongoDB en la uri
+2024-10-19 16:14:49,898 - ai.views - INFO - Conexión exitosa a Redis en redis-11043.c274.us-east-1-3.ec2.redns.redis-cloud.com:11043/0
+2024-10-19 16:19:10,461 - ai.model - INFO - Conectado a Redis en redis-11043.c274.us-east-1-3.ec2.redns.redis-cloud.com:11043 con base de datos None
+2024-10-19 16:19:10,462 - ai.model - INFO - Iniciando la carga del modelo de visión.
+2024-10-19 16:19:18,055 - ai.model - INFO - Modelo de visión cargado exitosamente.
+2024-10-19 16:19:18,549 - ai.views - INFO - Conexión exitosa a MongoDB en la uri
+2024-10-19 16:19:18,549 - ai.views - INFO - Conexión exitosa a Redis en redis-11043.c274.us-east-1-3.ec2.redns.redis-cloud.com:11043/0
+2024-10-19 16:23:55,463 - ai.model - INFO - Conectado a Redis en redis-11043.c274.us-east-1-3.ec2.redns.redis-cloud.com:11043 con base de datos None
+2024-10-19 16:23:55,463 - ai.model - INFO - Iniciando la carga del modelo de visión.
+2024-10-19 16:24:01,353 - ai.model - INFO - Modelo de visión cargado exitosamente.
+2024-10-19 16:24:01,708 - ai.views - INFO - Conexión exitosa a MongoDB en la uri
+2024-10-19 16:24:01,708 - ai.views - INFO - Conexión exitosa a Redis en redis-11043.c274.us-east-1-3.ec2.redns.redis-cloud.com:11043/0
+2024-10-19 16:25:37,990 - ai.model - INFO - Conectado a Redis en redis-11043.c274.us-east-1-3.ec2.redns.redis-cloud.com:11043 con base de datos None
+2024-10-19 16:25:37,991 - ai.model - INFO - Iniciando la carga del modelo de visión.
+2024-10-19 16:25:44,214 - ai.model - INFO - Modelo de visión cargado exitosamente.
+2024-10-19 16:25:44,564 - ai.views - INFO - Conexión exitosa a MongoDB en la uri
+2024-10-19 16:25:44,564 - ai.views - INFO - Conexión exitosa a Redis en redis-11043.c274.us-east-1-3.ec2.redns.redis-cloud.com:11043/0
+2024-10-19 16:26:35,443 - ai.model - INFO - Conectado a Redis en redis-11043.c274.us-east-1-3.ec2.redns.redis-cloud.com:11043 con base de datos None
+2024-10-19 16:26:35,444 - ai.model - INFO - Iniciando la carga del modelo de visión.
+2024-10-19 16:26:41,491 - ai.model - INFO - Modelo de visión cargado exitosamente.
+2024-10-19 16:26:41,645 - ai.views - INFO - Conexión exitosa a MongoDB en la uri
+2024-10-19 16:26:41,645 - ai.views - INFO - Conexión exitosa a Redis en redis-11043.c274.us-east-1-3.ec2.redns.redis-cloud.com:11043/0
+2024-10-19 16:27:37,231 - ai.model - INFO - Conectado a Redis en redis-11043.c274.us-east-1-3.ec2.redns.redis-cloud.com:11043 con base de datos None
+2024-10-19 16:27:37,246 - ai.model - INFO - Iniciando la carga del modelo de visión.
+2024-10-19 16:27:42,488 - ai.model - INFO - Modelo de visión cargado exitosamente.
+2024-10-19 16:27:42,834 - ai.views - INFO - Conexión exitosa a MongoDB en la uri
+2024-10-19 16:27:42,834 - ai.views - INFO - Conexión exitosa a Redis en redis-11043.c274.us-east-1-3.ec2.redns.redis-cloud.com:11043/0
+2024-10-19 16:30:59,356 - ai.model - INFO - Conectado a Redis en redis-11043.c274.us-east-1-3.ec2.redns.redis-cloud.com:11043 con base de datos None
+2024-10-19 16:30:59,356 - ai.model - INFO - Iniciando la carga del modelo de visión.
+2024-10-19 16:31:05,257 - ai.model - INFO - Modelo de visión cargado exitosamente.
+2024-10-19 16:31:05,551 - ai.views - INFO - Conexión exitosa a MongoDB en la uri
+2024-10-19 16:31:05,551 - ai.views - INFO - Conexión exitosa a Redis en redis-11043.c274.us-east-1-3.ec2.redns.redis-cloud.com:11043/0
+2024-10-19 16:33:14,366 - ai.model - INFO - Conectado a Redis en redis-11043.c274.us-east-1-3.ec2.redns.redis-cloud.com:11043 con base de datos None
+2024-10-19 16:33:14,367 - ai.model - INFO - Iniciando la carga del modelo de visión.
+2024-10-19 16:33:20,835 - ai.model - INFO - Modelo de visión cargado exitosamente.
+2024-10-19 16:33:21,241 - ai.views - INFO - Conexión exitosa a MongoDB en la uri
+2024-10-19 16:33:21,241 - ai.views - INFO - Conexión exitosa a Redis en redis-11043.c274.us-east-1-3.ec2.redns.redis-cloud.com:11043/0
+2024-10-19 16:36:15,530 - ai.model - INFO - Conectado a Redis en redis-11043.c274.us-east-1-3.ec2.redns.redis-cloud.com:11043 con base de datos None
+2024-10-19 16:36:15,530 - ai.model - INFO - Iniciando la carga del modelo de visión.
+2024-10-19 16:36:21,343 - ai.model - INFO - Modelo de visión cargado exitosamente.
+2024-10-19 16:36:21,754 - ai.views - INFO - Conexión exitosa a MongoDB en la uri
+2024-10-19 16:36:21,768 - ai.views - INFO - Conexión exitosa a Redis en redis-11043.c274.us-east-1-3.ec2.redns.redis-cloud.com:11043/0
+2024-10-19 16:38:49,697 - ai.model - INFO - Conectado a Redis en redis-11043.c274.us-east-1-3.ec2.redns.redis-cloud.com:11043 con base de datos None
+2024-10-19 16:38:49,697 - ai.model - INFO - Iniciando la carga del modelo de visión.
+2024-10-19 16:38:55,826 - ai.model - INFO - Modelo de visión cargado exitosamente.
+2024-10-19 16:38:56,235 - ai.views - INFO - Conexión exitosa a MongoDB en la uri
+2024-10-19 16:38:56,235 - ai.views - INFO - Conexión exitosa a Redis en redis-11043.c274.us-east-1-3.ec2.redns.redis-cloud.com:11043/0
+2024-10-19 16:40:00,540 - ai.model - INFO - Conectado a Redis en redis-11043.c274.us-east-1-3.ec2.redns.redis-cloud.com:11043 con base de datos None
+2024-10-19 16:40:00,542 - ai.model - INFO - Iniciando la carga del modelo de visión.
+2024-10-19 16:40:05,892 - ai.model - INFO - Modelo de visión cargado exitosamente.
+2024-10-19 16:40:06,292 - ai.views - INFO - Conexión exitosa a MongoDB en la uri
+2024-10-19 16:40:06,292 - ai.views - INFO - Conexión exitosa a Redis en redis-11043.c274.us-east-1-3.ec2.redns.redis-cloud.com:11043/0
+2024-10-19 16:41:02,471 - ai.model - INFO - Conectado a Redis en redis-11043.c274.us-east-1-3.ec2.redns.redis-cloud.com:11043 con base de datos None
+2024-10-19 16:41:02,472 - ai.model - INFO - Iniciando la carga del modelo de visión.
+2024-10-19 16:41:08,764 - ai.model - INFO - Modelo de visión cargado exitosamente.
+2024-10-19 16:41:09,070 - ai.views - INFO - Conexión exitosa a MongoDB en la uri
+2024-10-19 16:41:09,071 - ai.views - INFO - Conexión exitosa a Redis en redis-11043.c274.us-east-1-3.ec2.redns.redis-cloud.com:11043/0
+2024-10-19 16:43:22,685 - ai.model - INFO - Conectado a Redis en redis-11043.c274.us-east-1-3.ec2.redns.redis-cloud.com:11043 con base de datos None
+2024-10-19 16:43:22,686 - ai.model - INFO - Iniciando la carga del modelo de visión.
+2024-10-19 16:43:28,521 - ai.model - INFO - Modelo de visión cargado exitosamente.
+2024-10-19 16:43:28,819 - ai.views - INFO - Conexión exitosa a MongoDB en la uri
+2024-10-19 16:43:28,821 - ai.views - INFO - Conexión exitosa a Redis en redis-11043.c274.us-east-1-3.ec2.redns.redis-cloud.com:11043/0
+2024-10-19 16:44:44,439 - ai.model - INFO - Conectado a Redis en redis-11043.c274.us-east-1-3.ec2.redns.redis-cloud.com:11043 con base de datos None
+2024-10-19 16:44:44,447 - ai.model - INFO - Iniciando la carga del modelo de visión.
+2024-10-19 16:44:49,696 - ai.model - INFO - Modelo de visión cargado exitosamente.
+2024-10-19 16:44:50,035 - ai.views - INFO - Conexión exitosa a MongoDB en la uri
+2024-10-19 16:44:50,035 - ai.views - INFO - Conexión exitosa a Redis en redis-11043.c274.us-east-1-3.ec2.redns.redis-cloud.com:11043/0
+2024-10-19 16:45:23,784 - ai.model - INFO - Conectado a Redis en redis-11043.c274.us-east-1-3.ec2.redns.redis-cloud.com:11043 con base de datos None
+2024-10-19 16:45:23,784 - ai.model - INFO - Iniciando la carga del modelo de visión.
+2024-10-19 16:45:29,745 - ai.model - INFO - Modelo de visión cargado exitosamente.
+2024-10-19 16:45:29,870 - ai.views - INFO - Conexión exitosa a MongoDB en la uri
+2024-10-19 16:45:29,870 - ai.views - INFO - Conexión exitosa a Redis en redis-11043.c274.us-east-1-3.ec2.redns.redis-cloud.com:11043/0
+2024-10-19 16:46:43,269 - ai.model - INFO - Conectado a Redis en redis-11043.c274.us-east-1-3.ec2.redns.redis-cloud.com:11043 con base de datos None
+2024-10-19 16:46:43,269 - ai.model - INFO - Iniciando la carga del modelo de visión.
+2024-10-19 16:46:48,714 - ai.model - INFO - Modelo de visión cargado exitosamente.
+2024-10-19 16:46:49,325 - ai.views - INFO - Conexión exitosa a MongoDB en la uri
+2024-10-19 16:46:49,325 - ai.views - INFO - Conexión exitosa a Redis en redis-11043.c274.us-east-1-3.ec2.redns.redis-cloud.com:11043/0
+2024-10-19 16:49:02,168 - ai.model - INFO - Conectado a Redis en redis-11043.c274.us-east-1-3.ec2.redns.redis-cloud.com:11043 con base de datos None
+2024-10-19 16:49:02,168 - ai.model - INFO - Iniciando la carga del modelo de visión.
+2024-10-19 16:49:07,817 - ai.model - INFO - Modelo de visión cargado exitosamente.
+2024-10-19 16:49:08,107 - ai.views - INFO - Conexión exitosa a MongoDB en la uri
+2024-10-19 16:49:08,107 - ai.views - INFO - Conexión exitosa a Redis en redis-11043.c274.us-east-1-3.ec2.redns.redis-cloud.com:11043/0
+2024-10-19 16:49:33,113 - ai.model - INFO - Conectado a Redis en redis-11043.c274.us-east-1-3.ec2.redns.redis-cloud.com:11043 con base de datos None
+2024-10-19 16:49:33,129 - ai.model - INFO - Iniciando la carga del modelo de visión.
+2024-10-19 16:49:38,598 - ai.model - INFO - Modelo de visión cargado exitosamente.
+2024-10-19 16:49:38,749 - ai.views - INFO - Conexión exitosa a MongoDB en la uri
+2024-10-19 16:49:38,750 - ai.views - INFO - Conexión exitosa a Redis en redis-11043.c274.us-east-1-3.ec2.redns.redis-cloud.com:11043/0
+2024-10-19 16:50:55,658 - ai.model - INFO - Conectado a Redis en redis-11043.c274.us-east-1-3.ec2.redns.redis-cloud.com:11043 con base de datos None
+2024-10-19 16:50:55,658 - ai.model - INFO - Iniciando la carga del modelo de visión.
+2024-10-19 16:51:01,697 - ai.model - INFO - Modelo de visión cargado exitosamente.
+2024-10-19 16:51:02,082 - ai.views - INFO - Conexión exitosa a MongoDB en la uri
+2024-10-19 16:51:02,082 - ai.views - INFO - Conexión exitosa a Redis en redis-11043.c274.us-east-1-3.ec2.redns.redis-cloud.com:11043/0
+2024-10-19 16:52:38,787 - ai.model - INFO - Conectado a Redis en redis-11043.c274.us-east-1-3.ec2.redns.redis-cloud.com:11043 con base de datos None
+2024-10-19 16:52:38,788 - ai.model - INFO - Iniciando la carga del modelo de visión.
+2024-10-19 16:52:44,768 - ai.model - INFO - Modelo de visión cargado exitosamente.
+2024-10-19 16:52:45,376 - ai.views - INFO - Conexión exitosa a MongoDB en la uri
+2024-10-19 16:52:45,376 - ai.views - INFO - Conexión exitosa a Redis en redis-11043.c274.us-east-1-3.ec2.redns.redis-cloud.com:11043/0
+2024-10-19 16:54:36,488 - ai.model - INFO - Conectado a Redis en redis-11043.c274.us-east-1-3.ec2.redns.redis-cloud.com:11043 con base de datos None
+2024-10-19 16:54:36,489 - ai.model - INFO - Iniciando la carga del modelo de visión.
+2024-10-19 16:54:42,027 - ai.model - INFO - Modelo de visión cargado exitosamente.
+2024-10-19 16:54:42,397 - ai.views - INFO - Conexión exitosa a MongoDB en la uri
+2024-10-19 16:54:42,397 - ai.views - INFO - Conexión exitosa a Redis en redis-11043.c274.us-east-1-3.ec2.redns.redis-cloud.com:11043/0
+2024-10-19 16:56:22,732 - ai.model - INFO - Conectado a Redis en redis-11043.c274.us-east-1-3.ec2.redns.redis-cloud.com:11043 con base de datos None
+2024-10-19 16:56:22,747 - ai.model - INFO - Iniciando la carga del modelo de visión.
+2024-10-19 16:56:28,100 - ai.model - INFO - Modelo de visión cargado exitosamente.
+2024-10-19 16:56:28,394 - ai.views - INFO - Conexión exitosa a MongoDB en la uri
+2024-10-19 16:56:28,394 - ai.views - INFO - Conexión exitosa a Redis en redis-11043.c274.us-east-1-3.ec2.redns.redis-cloud.com:11043/0
+2024-10-25 18:14:34,298 - ai.model - INFO - Conectado a Redis en redis-11043.c274.us-east-1-3.ec2.redns.redis-cloud.com:11043 con base de datos None
+2024-10-25 18:14:34,298 - ai.model - INFO - Iniciando la carga del modelo de visión.
+2024-10-25 18:14:47,391 - ai.model - INFO - Modelo de visión cargado exitosamente.
+2024-10-25 18:14:48,423 - ai.views - INFO - Conexión exitosa a MongoDB en la uri
+2024-10-25 18:14:48,425 - ai.views - INFO - Conexión exitosa a Redis en redis-11043.c274.us-east-1-3.ec2.redns.redis-cloud.com:11043/0

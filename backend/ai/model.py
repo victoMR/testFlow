@@ -117,72 +117,110 @@ model.to(device)
 def preprocess_image(image):
     """
     Procesa la imagen para mejorar la detección de fórmulas LaTeX.
+    Optimizado para fórmulas matem��ticas y eliminación de elementos no deseados.
     """
     try:
         logger.info("Preprocesando la imagen")
         if isinstance(image, np.ndarray):
-            gray = (
-                cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-                if len(image.shape) == 3
-                else image
+            # Convertir a escala de grises si es necesario
+            gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY) if len(image.shape) == 3 else image
+            
+            # Aplicar umbral adaptativo para mejorar el contraste de texto
+            binary = cv2.adaptiveThreshold(
+                gray, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, 11, 2
             )
+
+            # Eliminar ruido manteniendo texto
+            denoised = cv2.fastNlMeansDenoising(binary, None, 10, 7, 21)
+
+            # Detectar y eliminar áreas grandes que probablemente no sean fórmulas
+            contours, _ = cv2.findContours(
+                255 - denoised, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE
+            )
+            
+            # Filtrar contornos basados en área y proporción
+            mask = np.ones_like(denoised) * 255
+            for cnt in contours:
+                area = cv2.contourArea(cnt)
+                x, y, w, h = cv2.boundingRect(cnt)
+                aspect_ratio = float(w)/h if h > 0 else 0
+                
+                # Si el área es muy grande o la proporción no es típica de una fórmula
+                if area > denoised.size * 0.5 or aspect_ratio > 5 or aspect_ratio < 0.2:
+                    cv2.drawContours(mask, [cnt], -1, 0, -1)
+
+            # Aplicar máscara
+            result = cv2.bitwise_and(denoised, mask)
+
+            # Mejorar contraste final
+            clahe = cv2.createCLAHE(clipLimit=2.0, tileGridSize=(8, 8))
+            final = clahe.apply(result)
+
+            logger.info("Preprocesamiento de imagen completado exitosamente")
+            return final
         else:
             logger.error("La imagen no es un array de numpy válido")
             return None
 
-        # Aplicar técnicas de preprocesamiento
-        denoised = cv2.fastNlMeansDenoising(gray, None, 10, 7, 21)
-        binary = cv2.adaptiveThreshold(
-            denoised, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, 11, 2
-        )
-        kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (3, 3))
-        morph = cv2.morphologyEx(binary, cv2.MORPH_CLOSE, kernel)
-        clahe = cv2.createCLAHE(clipLimit=2.0, tileGridSize=(8, 8))
-        contrast = clahe.apply(morph)
-
-        logger.info("Preprocesamiento de imagen completado.")
-        return contrast
     except Exception as e:
         logger.error(f"Error en el preprocesamiento de la imagen: {e}")
         return None
 
 
 def process_with_im2latex(image):
+    """
+    Procesa la imagen para detectar y convertir fórmulas matemáticas a LaTeX.
+    Optimizado para velocidad y precisión.
+    """
     try:
         logger.info("Procesando imagen con el modelo Im2Latex")
 
+        # Preprocesar imagen
         preprocessed_image = preprocess_image(image)
         if preprocessed_image is None:
             raise ValueError("Error en el preprocesamiento de la imagen")
 
+        # Convertir a formato PIL
         image = Image.fromarray(preprocessed_image).convert("RGB")
+
+        # Verificar si la imagen contiene texto matemático antes de procesarla
+        if not contains_math_content(preprocessed_image):
+            logger.info("No se detectó contenido matemático en la imagen")
+            return None, None
+
+        # Procesar con el modelo
         pixel_values = feature_extractor(
             images=image, return_tensors="pt"
         ).pixel_values.to(device)
-        attention_mask = torch.ones(pixel_values.shape[:2], dtype=torch.long).to(device)
+
+        # Usar half-precision para acelerar el procesamiento si está disponible
+        if device.type == 'cuda':
+            model.half()
+            pixel_values = pixel_values.half()
 
         with torch.no_grad():
             generated_ids = model.generate(
                 pixel_values,
-                attention_mask=attention_mask,
                 max_length=300,
-                num_beams=5,
+                num_beams=3,  # Reducido para mayor velocidad
                 length_penalty=0.6,
                 no_repeat_ngram_size=2,
+                early_stopping=True,
             )
+
         generated_text = tokenizer.batch_decode(
             generated_ids, skip_special_tokens=True
         )[0]
 
-        if is_math_formula(generated_text):
+        # Verificar y limpiar el resultado
+        if is_valid_latex(generated_text):
             generated_text = correct_ocr_errors(generated_text)
             generated_text = clean_latex_text(generated_text)
             problem_type = classify_problem_type(generated_text)
             logger.info(f"Fórmula LaTeX detectada: {generated_text}")
-            logger.info(f"Tipo de problema: {problem_type}")
             return generated_text, problem_type
         else:
-            logger.info("No se detectó ninguna fórmula matemática en la imagen.")
+            logger.info("No se detectó una fórmula matemática válida")
             return None, None
 
     except Exception as e:
@@ -207,7 +245,23 @@ def correct_ocr_errors(text):
         "\\mathbb{R}": "ℝ",
         "\\mathbb{N}": "ℕ",
         "\\mathbb{Z}": "ℤ",
-        # ... (resto de correcciones)
+        "\\oslash": "\\oslash",
+        "\\oplus": "\\oplus",
+        "\\ominus": "\\ominus",
+        "\\otimes": "\\otimes",
+        "\\odot": "\\odot",
+        "\\bigodot": "\\bigodot",
+        "\\bigoplus": "\\bigoplus",
+        "\\bigotimes": "\\bigotimes",
+        "\\oslash": "\\oslash",
+        "\\leq": "\\leq",
+        "\\geq": "\\geq",
+        "\\neq": "\\neq",
+        "\\approx": "\\approx",
+        "\\propto": "\\propto",
+        "\\infty": "\\infty",
+        "\\wedge": "\\wedge",
+        "\\vee": "\\vee"
     }
     for wrong_char, correct_char in corrections.items():
         text = text.replace(wrong_char, correct_char)
@@ -403,8 +457,7 @@ latex_equivalentes = {
     "oplus": "\\oplus",
     "ominus": "\\ominus",
     "otimes": "\\otimes",
-    "oslash": "\\oslash",
-    # ... (resto de equivalencias)
+    "oslash": "\\oslash"
 }
 
 
@@ -541,6 +594,48 @@ def is_math_formula(text, confidence_threshold=0.7):
 
     return confidence >= confidence_threshold
 
+def contains_math_content(image):
+    """
+    Detecta rápidamente si una imagen contiene contenido matemático.
+    """
+    try:
+        # Detectar características típicas de fórmulas matemáticas
+        edges = cv2.Canny(image, 100, 200)
+        contours, _ = cv2.findContours(edges, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+        
+        # Analizar patrones de contornos
+        math_patterns = 0
+        for cnt in contours:
+            area = cv2.contourArea(cnt)
+            perimeter = cv2.arcLength(cnt, True)
+            if perimeter > 0:
+                circularity = 4 * np.pi * area / (perimeter * perimeter)
+                if 0.1 < circularity < 0.9:  # Típico para símbolos matemáticos
+                    math_patterns += 1
+
+        return math_patterns > 5  # Umbral ajustable
+
+    except Exception as e:
+        logger.error(f"Error al detectar contenido matemático: {e}")
+        return True  # En caso de error, permitir el procesamiento
+
+def is_valid_latex(text):
+    """
+    Verifica si el texto generado es una fórmula LaTeX válida.
+    """
+    # Patrones comunes en fórmulas matemáticas
+    math_patterns = [
+        r'\\[a-zA-Z]+{',  # Comandos LaTeX con llaves
+        r'\\[a-zA-Z]+\s',  # Comandos LaTeX con espacio
+        r'\$.*\$',         # Contenido entre $
+        r'[0-9]+',         # Números
+        r'[+\-*/=]',       # Operadores matemáticos
+        r'\\frac',         # Fracciones
+        r'\\sum',          # Sumas
+        r'\\int',          # Integrales
+    ]
+    
+    return any(re.search(pattern, text) for pattern in math_patterns)
 
 def main():
     try:

@@ -85,19 +85,21 @@ async def index(scope, receive, send):
 
 async def procesar_fotograma(scope, receive, send):
     if scope["method"] == "OPTIONS":
-        await send(
-            {
-                "type": "http.response.start",
-                "status": 200,
-                "headers": [
-                    (b"content-type", b"text/plain"),
-                    (b"access-control-allow-origin", b"*"),
-                    (b"access-control-allow-methods", b"POST, OPTIONS"),
-                    (b"access-control-allow-headers", b"Content-Type"),
-                ],
-            }
-        )
-        await send({"type": "http.response.body", "body": b""})
+        await send({
+            "type": "http.response.start",
+            "status": 200,
+            "headers": [
+                (b"content-type", b"application/json"),
+                (b"access-control-allow-origin", b"http://localhost:3000"),
+                (b"access-control-allow-methods", b"POST, OPTIONS"),
+                (b"access-control-allow-headers", b"content-type"),
+                (b"access-control-allow-credentials", b"true"),
+            ],
+        })
+        await send({
+            "type": "http.response.body",
+            "body": b"",
+        })
         return
 
     if scope["method"] != "POST":
@@ -503,6 +505,7 @@ def cleanup():
 import atexit
 
 atexit.register(cleanup)
+
 
 
 

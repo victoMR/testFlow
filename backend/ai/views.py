@@ -5,10 +5,8 @@ from pymongo import MongoClient, errors
 from dotenv import load_dotenv
 from concurrent.futures import ThreadPoolExecutor
 from .model import (
-    Classifier,
-    render_latex_to_image,
-    process_with_im2latex,
-    convertir_a_latex,
+    FormulaDetector,
+    formula_detector,
 )
 import os
 import logging
@@ -20,7 +18,6 @@ import asyncio
 from channels.http import AsgiHandler
 from django.core.handlers.asgi import ASGIRequest
 import numpy as np
-import hashlib
 import redis
 import json
 from django.conf import settings
@@ -37,20 +34,47 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-# Configuración de MongoDB
+# Configuración de MongoDB con manejo de SSL
 mongo_uri = os.getenv("MONGO_URI")
 if not mongo_uri:
     logger.error("MONGO_URI no está configurado en las variables de entorno")
     raise ValueError("MONGO_URI no está configurado")
 
 try:
-    client = MongoClient(mongo_uri)
+    client = MongoClient(
+        mongo_uri,
+        ssl=True,
+        ssl_cert_reqs='CERT_NONE',  # Esto es importante para evitar errores SSL
+        serverSelectionTimeoutMS=5000,  # Timeout más corto para la selección del servidor
+        connectTimeoutMS=10000,  # Timeout de conexión
+        retryWrites=True,
+        w='majority'
+    )
+    # Verificar la conexión
+    client.admin.command('ping')
+    
     db = client["math_problems_db"]
     collection = db["problemas"]
-    logger.info(f"Conexión exitosa a MongoDB en la uri")
+    logger.info("Conexión exitosa a MongoDB")
 except errors.ConnectionFailure as e:
     logger.error(f"No se pudo conectar a MongoDB: {e}")
-    raise
+    # En lugar de levantar una excepción, crear una colección en memoria
+    from pymongo.collection import Collection
+    from pymongo.database import Database
+    
+    class MemoryCollection:
+        def __init__(self):
+            self.documents = []
+            
+        def insert_one(self, document):
+            self.documents.append(document)
+            return True
+            
+        def find(self):
+            return self.documents
+    
+    logger.warning("Usando almacenamiento en memoria como fallback")
+    collection = MemoryCollection()
 
 # Configuración de Redis
 redis_host = os.getenv("REDIS_HOST", "localhost")
@@ -103,160 +127,112 @@ async def procesar_fotograma(scope, receive, send):
         return
 
     if scope["method"] != "POST":
-        await send(
-            {
-                "type": "http.response.start",
-                "status": 405,
-                "headers": [(b"content-type", b"text/plain")],
-            }
-        )
+        await send({
+            "type": "http.response.start",
+            "status": 405,
+            "headers": [(b"content-type", b"text/plain")],
+        })
         await send({"type": "http.response.body", "body": b"Method Not Allowed"})
         return
 
-    body = b""
-    more_body = True
-    while more_body:
-        message = await receive()
-        body += message.get("body", b"")
-        more_body = message.get("more_body", False)
-
-    if not body:
-        await send(
-            {
-                "type": "http.response.start",
-                "status": 400,
-                "headers": [(b"content-type", b"text/plain")],
-            }
-        )
-        await send(
-            {
-                "type": "http.response.body",
-                "body": "No se proporcionó un fotograma".encode(),
-            }
-        )
-        return
-
     try:
-        img_hash = hashlib.md5(body).hexdigest()
-        logger.info(f"Hash de la imagen calculado: {img_hash}")
+        # Leer el cuerpo de la solicitud
+        body = b""
+        more_body = True
+        while more_body:
+            message = await receive()
+            body += message.get("body", b"")
+            more_body = message.get("more_body", False)
 
-        cached_result = redis_client.get(img_hash)
-        if cached_result:
-            logger.info(f"Resultado obtenido de caché para {img_hash}")
-            await send(
-                {
-                    "type": "http.response.start",
-                    "status": 200,
-                    "headers": [(b"content-type", b"application/json")],
-                }
-            )
-            await send({"type": "http.response.body", "body": cached_result.encode()})
-            return
-
+        # Procesar la imagen
         nparr = np.frombuffer(body, np.uint8)
         img = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
 
         if img is None:
             raise ValueError("No se pudo decodificar la imagen")
 
-        processed_result = await asyncio.to_thread(process_with_im2latex, img)
-        if processed_result is None or processed_result[0] is None:
-            await send({
-                "type": "http.response.start",
-                "status": 404,
-                "headers": [(b"content-type", b"application/json")],
-            })
-            await send({
-                "type": "http.response.body",
-                "body": json.dumps({"message": "No se detectó ninguna fórmula matemática en la imagen."}).encode(),
-            })
-            return
-
-        # Asumimos que process_with_im2latex ahora devuelve una tupla (formula, tipo)
-        cleaned_formula, problem_type = processed_result
-
-        logger.info(
-            f"Formula clasificada: {cleaned_formula}, Tipo de problema: {problem_type}"
+        # Solo detectar la fórmula
+        latex_formula = await asyncio.to_thread(
+            formula_detector.process_image, img
         )
 
-        if cleaned_formula:
-            latex_image = await asyncio.to_thread(render_latex_to_image, cleaned_formula)
-            if latex_image:
-                buffered = io.BytesIO()
-                latex_image.save(buffered, format="PNG")
-                img_str = base64.b64encode(buffered.getvalue()).decode()
-            else:
-                img_str = ""
-
-            try:
-                result = await asyncio.to_thread(
-                    collection.update_one,
-                    {"formula": cleaned_formula},
-                    {
-                        "$set": {
-                            "tipo": problem_type,
-                        },
-                        "$inc": {"usos": 1},
-                    },
-                    upsert=True,
-                )
-
-                message = (
-                    "Nuevo problema detectado y agregado a la base de datos."
-                    if result.upserted_id
-                    else "Problema existente actualizado en la base de datos."
-                )
-            except Exception as db_error:
-                logger.error(f"Error al actualizar la base de datos: {str(db_error)}")
-                message = "Error al actualizar la base de datos."
-
-            response_data = {
-                "formula": cleaned_formula,
-                "tipo": problem_type,
-                "message": message,
-                "latex_image": img_str,
-            }
-
-            json_response = json.dumps(response_data)
-
-            if redis_client:
-                redis_client.setex(img_hash, settings.CACHE_TIMEOUT, json_response)
-
-            await send(
+        if latex_formula:
+            # Guardar en la base de datos
+            await asyncio.to_thread(
+                collection.insert_one,
                 {
-                    "type": "http.response.start",
-                    "status": 200,
-                    "headers": [(b"content-type", b"application/json")],
+                    "formula": latex_formula,
+                    "fecha_deteccion": time.time(),
+                    "procesado": False
                 }
             )
-            await send({"type": "http.response.body", "body": json_response.encode()})
+
+            response_data = {
+                "status": "success",
+                "message": "Fórmula detectada y guardada"
+            }
+
+            await send({
+                "type": "http.response.start",
+                "status": 200,
+                "headers": [
+                    (b"content-type", b"application/json"),
+                    (b"access-control-allow-origin", b"http://localhost:3000"),
+                    (b"access-control-allow-credentials", b"true"),
+                ],
+            })
+            await send({
+                "type": "http.response.body",
+                "body": json.dumps(response_data).encode(),
+            })
             return
 
-        logger.warning("No se detectó ninguna fórmula en el fotograma.")
-        await send(
-            {
-                "type": "http.response.start",
-                "status": 404,
-                "headers": [(b"content-type", b"text/plain")],
+        # Respuesta cuando no se detecta fórmula
+        response_data = {
+            "status": "no_formula",
+            "message": "No se detectó ninguna fórmula matemática en la imagen",
+            "details": {
+                "suggestion": "Asegúrate de mostrar claramente una fórmula matemática a la cámara"
             }
-        )
-        await send(
-            {
-                "type": "http.response.body",
-                "body": "No se detectó ninguna fórmula en el fotograma".encode(),
-            }
-        )
+        }
 
-    except Exception as e:
-        logger.error(f"Error al procesar el fotograma: {str(e)}")
         await send({
             "type": "http.response.start",
-            "status": 500,
-            "headers": [(b"content-type", b"application/json")],
+            "status": 404,
+            "headers": [
+                (b"content-type", b"application/json"),
+                (b"access-control-allow-origin", b"http://localhost:3000"),
+                (b"access-control-allow-credentials", b"true"),
+            ],
         })
         await send({
             "type": "http.response.body",
-            "body": json.dumps({"error": f"Error al procesar el fotograma: {str(e)}"}).encode(),
+            "body": json.dumps(response_data).encode(),
+        })
+
+    except Exception as e:
+        logger.error(f"Error al procesar el fotograma: {e}")
+        error_response = {
+            "status": "error",
+            "message": "Error al procesar la imagen",
+            "details": {
+                "error": str(e),
+                "suggestion": "Por favor, intenta de nuevo o verifica la conexión"
+            }
+        }
+        
+        await send({
+            "type": "http.response.start",
+            "status": 500,
+            "headers": [
+                (b"content-type", b"application/json"),
+                (b"access-control-allow-origin", b"http://localhost:3000"),
+                (b"access-control-allow-credentials", b"true"),
+            ],
+        })
+        await send({
+            "type": "http.response.body",
+            "body": json.dumps(error_response).encode(),
         })
 
 
@@ -264,146 +240,323 @@ async def procesar_pdf(scope, receive, send):
     """Procesa un archivo PDF subido y extrae ecuaciones matemáticas."""
     request = ASGIRequest(scope, receive)
 
+    if scope["method"] == "OPTIONS":
+        await send({
+            "type": "http.response.start",
+            "status": 200,
+            "headers": [
+                (b"content-type", b"application/json"),
+                (b"access-control-allow-origin", b"http://localhost:3000"),
+                (b"access-control-allow-methods", b"POST, OPTIONS"),
+                (b"access-control-allow-headers", b"content-type"),
+                (b"access-control-allow-credentials", b"true"),
+            ],
+        })
+        await send({
+            "type": "http.response.body",
+            "body": b"",
+        })
+        return
+
     if "pdf" not in request.FILES:
-        response = JsonResponse(
-            {"error": "Debe proporcionar un archivo PDF"}, status=400
-        )
-        await response(scope, receive, send)
+        response_data = {
+            "status": "error",
+            "message": "Debe proporcionar un archivo PDF"
+        }
+        await send({
+            "type": "http.response.start",
+            "status": 400,
+            "headers": [
+                (b"content-type", b"application/json"),
+                (b"access-control-allow-origin", b"http://localhost:3000"),
+                (b"access-control-allow-credentials", b"true"),
+            ],
+        })
+        await send({
+            "type": "http.response.body",
+            "body": json.dumps(response_data).encode(),
+        })
         return
 
     pdf_file = request.FILES["pdf"]
     start_time = time.time()
 
     try:
+        # Guardar temporalmente el archivo PDF
         temp_path = default_storage.save("temp/temp.pdf", ContentFile(pdf_file.read()))
         temp_file_path = default_storage.path(temp_path)
 
-        # Usar ThreadPoolExecutor para procesar el PDF de manera asíncrona
+        # Usar la instancia global formula_detector para procesar el PDF
         problemas_detectados = await asyncio.to_thread(
-            Classifier.process_pdf, temp_file_path
+            formula_detector.process_pdf, temp_file_path
         )
 
         # Guardar problemas en la base de datos
         for problema in problemas_detectados:
             await asyncio.to_thread(
-                collection.update_one,
-                {"formula": problema["formula"]},
-                {"$setOnInsert": problema},
-                upsert=True,
+                collection.insert_one,
+                {
+                    "formula": problema["formula"],
+                    "tipo": problema["tipo"],
+                    "pagina": problema["pagina"],
+                    "confidence": problema["confidence"],
+                    "origen": problema["origen"],
+                    "fecha_deteccion": time.time(),
+                    "nombre_archivo": pdf_file.name
+                }
             )
 
         end_time = time.time()
-        logger.info(
-            f"Tiempo de procesamiento del PDF: {end_time - start_time:.2f} segundos"
-        )
-        response = JsonResponse(
-            {
-                "message": f"PDF '{pdf_file.name}' procesado correctamente",
-                "problemas": problemas_detectados,
-            }
-        )
-        await response(scope, receive, send)
+        tiempo_proceso = end_time - start_time
+        
+        response_data = {
+            "status": "success",
+            "message": f"PDF '{pdf_file.name}' procesado correctamente",
+            "tiempo_proceso": f"{tiempo_proceso:.2f} segundos",
+            "problemas": problemas_detectados,
+            "total_formulas": len(problemas_detectados)
+        }
+
+        await send({
+            "type": "http.response.start",
+            "status": 200,
+            "headers": [
+                (b"content-type", b"application/json"),
+                (b"access-control-allow-origin", b"http://localhost:3000"),
+                (b"access-control-allow-credentials", b"true"),
+            ],
+        })
+        await send({
+            "type": "http.response.body",
+            "body": json.dumps(response_data).encode(),
+        })
+
     except Exception as e:
         logger.error(f"Error al procesar el PDF: {str(e)}")
-        response = JsonResponse(
-            {"error": f"Error al procesar el PDF: {str(e)}"}, status=500
-        )
-        await response(scope, receive, send)
+        error_response = {
+            "status": "error",
+            "message": "Error al procesar el PDF",
+            "details": {
+                "error": str(e),
+                "suggestion": "Verifica que el archivo sea un PDF válido y no esté dañado"
+            }
+        }
+        
+        await send({
+            "type": "http.response.start",
+            "status": 500,
+            "headers": [
+                (b"content-type", b"application/json"),
+                (b"access-control-allow-origin", b"http://localhost:3000"),
+                (b"access-control-allow-credentials", b"true"),
+            ],
+        })
+        await send({
+            "type": "http.response.body",
+            "body": json.dumps(error_response).encode(),
+        })
+
     finally:
-        if os.path.exists(temp_file_path):
+        # Limpiar archivos temporales
+        if 'temp_file_path' in locals() and os.path.exists(temp_file_path):
             os.remove(temp_file_path)
 
 
 async def procesar_imagen(scope, receive, send):
     """Procesa una imagen subida y detecta ecuaciones matemáticas."""
-    request = ASGIRequest(scope, receive)
-
-    if "imagen" not in request.FILES:
-        response = JsonResponse(
-            {"error": "Debe proporcionar un archivo de imagen"}, status=400
-        )
-        await response(scope, receive, send)
+    
+    if scope["method"] == "OPTIONS":
+        await send({
+            "type": "http.response.start",
+            "status": 200,
+            "headers": [
+                (b"content-type", b"application/json"),
+                (b"access-control-allow-origin", b"http://localhost:3000"),
+                (b"access-control-allow-methods", b"POST, OPTIONS"),
+                (b"access-control-allow-headers", b"content-type"),
+                (b"access-control-allow-credentials", b"true"),
+            ],
+        })
+        await send({
+            "type": "http.response.body",
+            "body": b"",
+        })
         return
 
-    imagen = request.FILES["imagen"]
-    start_time = time.time()
-
     try:
-        temp_path = default_storage.save(
-            "temp/temp_image.png", ContentFile(imagen.read())
-        )
-        temp_file_path = default_storage.path(temp_path)
+        # Leer el cuerpo de la solicitud
+        body = b""
+        more_body = True
+        while more_body:
+            message = await receive()
+            body += message.get("body", b"")
+            more_body = message.get("more_body", False)
 
-        # Usar caché para evitar reprocesamiento de imágenes idénticas con redis
-        file_hash = hashlib.md5(imagen.read()).hexdigest()
-        cached_result = cache.get(file_hash)
-        if cached_result:
-            logger.info(f"Resultado obtenido de caché para {file_hash}")
-            response = JsonResponse(cached_result)
-            await response(scope, receive, send)
-            return
+        # Buscar el inicio y fin de los datos de la imagen
+        start_marker = b'\r\n\r\n'
+        end_marker = b'\r\n--'
+        
+        start_idx = body.find(start_marker)
+        if start_idx == -1:
+            raise ValueError("No se encontró el inicio de los datos de la imagen")
+        
+        start_idx += len(start_marker)
+        
+        end_idx = body.find(end_marker, start_idx)
+        if end_idx == -1:
+            end_idx = len(body)  # Si no hay marcador final, usar todo el contenido restante
 
-        cleaned_formula, problem_type = await asyncio.to_thread(
-            Classifier.process_image, temp_file_path
+        # Extraer los datos binarios de la imagen
+        image_data = body[start_idx:end_idx]
+        
+        if not image_data:
+            raise ValueError("No se encontraron datos de imagen")
+
+        # Verificar tamaño antes de procesar
+        if len(image_data) > 5 * 1024 * 1024:  # 5MB
+            raise ValueError("La imagen no debe superar 5MB")
+
+        # Convertir a numpy array y decodificar
+        nparr = np.frombuffer(image_data, np.uint8)
+        img = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
+
+        if img is None:
+            raise ValueError("No se pudo decodificar la imagen. Formato no soportado o datos corruptos.")
+
+        start_time = time.time()
+        logger.info("Imagen decodificada correctamente. Iniciando procesamiento...")
+
+        # Detectar fórmula
+        latex_formula = await asyncio.to_thread(
+            formula_detector.process_image, img
         )
-        if cleaned_formula:
-            # Renderizar la fórmula LaTeX a imagen
+
+        if latex_formula:
+            # Clasificar tipo de problema
+            problem_type = formula_detector.latex_processor.classify_problem(latex_formula)
+            
+            # Calcular confianza
+            confidence = await asyncio.to_thread(
+                formula_detector._calculate_confidence, latex_formula
+            )
+
+            try:
+                # Intentar guardar en MongoDB con retry
+                for attempt in range(3):  # Intentar 3 veces
+                    try:
+                        await asyncio.to_thread(
+                            collection.insert_one,
+                            {
+                                "formula": latex_formula,
+                                "tipo": problem_type,
+                                "confidence": confidence,
+                                "fecha_deteccion": time.time(),
+                                "procesado": True
+                            }
+                        )
+                        break  # Si tiene éxito, salir del bucle
+                    except Exception as db_error:
+                        if attempt == 2:  # Si es el último intento
+                            logger.error(f"Error al guardar en la base de datos: {db_error}")
+                        else:
+                            await asyncio.sleep(1)  # Esperar antes de reintentar
+                            continue
+
+            except Exception as db_error:
+                logger.error(f"Error al guardar en la base de datos: {db_error}")
+                # Continuar con el procesamiento aunque falle el guardado
+
+            # Renderizar fórmula y continuar con la respuesta
             latex_image = await asyncio.to_thread(
-                render_latex_to_image, cleaned_formula
+                formula_detector.render_latex, latex_formula
             )
-            buffered = io.BytesIO()
-            latex_image.save(buffered, format="PNG")
-            img_str = base64.b64encode(buffered.getvalue()).decode()
-
-            # Guardar problema en la base de datos
-            await asyncio.to_thread(
-                collection.update_one,
-                {"formula": cleaned_formula},
-                {
-                    "$setOnInsert": {
-                        "imagen": imagen.name,
-                        "formula": cleaned_formula,
-                        "tipo": problem_type,
-                    }
-                },
-                upsert=True,
-            )
-
-            response_data = {
-                "message": f"Imagen '{imagen.name}' procesada correctamente",
-                "problema": {
-                    "formula": cleaned_formula,
-                    "tipo": problem_type,
-                    "latex_image": img_str,
-                },
-            }
-
-            # Guardar en caché el resultado
-            cache.set(file_hash, response_data, timeout=3600)  # Caché por 1 hora
+            
+            if latex_image:
+                buffered = io.BytesIO()
+                latex_image.save(buffered, format="PNG")
+                img_str = base64.b64encode(buffered.getvalue()).decode()
+            else:
+                img_str = None
 
             end_time = time.time()
-            logger.info(
-                f"Tiempo de procesamiento de la imagen: {end_time - start_time:.2f} segundos"
-            )
-            response = JsonResponse(response_data)
-            await response(scope, receive, send)
+            response_data = {
+                "status": "success",
+                "message": "Imagen procesada correctamente",
+                "tiempo_proceso": f"{end_time - start_time:.2f} segundos",
+                "problema": {
+                    "formula": latex_formula,
+                    "tipo": problem_type,
+                    "confidence": confidence,
+                    "latex_image": img_str
+                }
+            }
+
+            logger.info(f"Procesamiento exitoso. Fórmula detectada: {latex_formula}")
+
+            await send({
+                "type": "http.response.start",
+                "status": 200,
+                "headers": [
+                    (b"content-type", b"application/json"),
+                    (b"access-control-allow-origin", b"http://localhost:3000"),
+                    (b"access-control-allow-credentials", b"true"),
+                ],
+            })
+            await send({
+                "type": "http.response.body",
+                "body": json.dumps(response_data).encode(),
+            })
             return
 
-        logger.warning("No se detectó ninguna fórmula en la imagen.")
-        response = JsonResponse(
-            {"error": "No se detectó ninguna fórmula en la imagen."}, status=404
-        )
-        await response(scope, receive, send)
+        # No se detectó fórmula
+        response_data = {
+            "status": "no_formula",
+            "message": "No se detectó ninguna fórmula matemática en la imagen",
+            "details": {
+                "suggestion": "Asegúrate de que la imagen contenga una fórmula matemática clara"
+            }
+        }
+
+        logger.info("No se detectó fórmula matemática en la imagen")
+
+        await send({
+            "type": "http.response.start",
+            "status": 404,
+            "headers": [
+                (b"content-type", b"application/json"),
+                (b"access-control-allow-origin", b"http://localhost:3000"),
+                (b"access-control-allow-credentials", b"true"),
+            ],
+        })
+        await send({
+            "type": "http.response.body",
+            "body": json.dumps(response_data).encode(),
+        })
 
     except Exception as e:
         logger.error(f"Error al procesar la imagen: {str(e)}")
-        response = JsonResponse(
-            {"error": f"Error al procesar la imagen: {str(e)}"}, status=500
-        )
-        await response(scope, receive, send)
-    finally:
-        if os.path.exists(temp_file_path):
-            os.remove(temp_file_path)
+        error_response = {
+            "status": "error",
+            "message": "Error al procesar la imagen",
+            "details": {
+                "error": str(e),
+                "suggestion": "Verifica el formato y tamaño de la imagen"
+            }
+        }
+        
+        await send({
+            "type": "http.response.start",
+            "status": 500,
+            "headers": [
+                (b"content-type", b"application/json"),
+                (b"access-control-allow-origin", b"http://localhost:3000"),
+                (b"access-control-allow-credentials", b"true"),
+            ],
+        })
+        await send({
+            "type": "http.response.body",
+            "body": json.dumps(error_response).encode(),
+        })
 
 
 async def procesar_texto(scope, receive, send):
@@ -451,7 +604,7 @@ async def procesar_texto(scope, receive, send):
         logger.info(f"Texto recibido: '{texto}'")
 
         # Convertir el texto a LaTeX
-        latex = convertir_a_latex(texto)
+        latex = formula_detector.convertir_a_latex(texto)
 
         logger.info(f"LaTeX generado: '{latex}'")
 

@@ -1,0 +1,595 @@
+2024-10-29 12:40:50,177 - ai.model - INFO - Cargando modelo de visión...
+2024-10-29 12:41:00,118 - ai.model - INFO - Modelo cargado exitosamente
+2024-10-29 12:41:00,118 - ai.model - INFO - Dispositivo utilizado: cpu
+2024-10-29 12:41:00,126 - ai.model - INFO - Modelo: VisionEncoderDecoderModel(
+  (encoder): SwinModel(
+    (embeddings): SwinEmbeddings(
+      (patch_embeddings): SwinPatchEmbeddings(
+        (projection): Conv2d(3, 128, kernel_size=(4, 4), stride=(4, 4))
+      )
+      (norm): LayerNorm((128,), eps=1e-05, elementwise_affine=True)
+      (dropout): Dropout(p=0.0, inplace=False)
+    )
+    (encoder): SwinEncoder(
+      (layers): ModuleList(
+        (0): SwinStage(
+          (blocks): ModuleList(
+            (0-1): 2 x SwinLayer(
+              (layernorm_before): LayerNorm((128,), eps=1e-05, elementwise_affine=True)
+              (attention): SwinAttention(
+                (self): SwinSelfAttention(
+                  (query): Linear(in_features=128, out_features=128, bias=True)
+                  (key): Linear(in_features=128, out_features=128, bias=True)
+                  (value): Linear(in_features=128, out_features=128, bias=True)
+                  (dropout): Dropout(p=0.0, inplace=False)
+                )
+                (output): SwinSelfOutput(
+                  (dense): Linear(in_features=128, out_features=128, bias=True)
+                  (dropout): Dropout(p=0.0, inplace=False)
+                )
+              )
+              (drop_path): SwinDropPath(p=0.1)
+              (layernorm_after): LayerNorm((128,), eps=1e-05, elementwise_affine=True)
+              (intermediate): SwinIntermediate(
+                (dense): Linear(in_features=128, out_features=512, bias=True)
+                (intermediate_act_fn): GELUActivation()
+              )
+              (output): SwinOutput(
+                (dense): Linear(in_features=512, out_features=128, bias=True)
+                (dropout): Dropout(p=0.0, inplace=False)
+              )
+            )
+          )
+          (downsample): SwinPatchMerging(
+            (reduction): Linear(in_features=512, out_features=256, bias=False)
+            (norm): LayerNorm((512,), eps=1e-05, elementwise_affine=True)
+          )
+        )
+        (1): SwinStage(
+          (blocks): ModuleList(
+            (0-1): 2 x SwinLayer(
+              (layernorm_before): LayerNorm((256,), eps=1e-05, elementwise_affine=True)
+              (attention): SwinAttention(
+                (self): SwinSelfAttention(
+                  (query): Linear(in_features=256, out_features=256, bias=True)
+                  (key): Linear(in_features=256, out_features=256, bias=True)
+                  (value): Linear(in_features=256, out_features=256, bias=True)
+                  (dropout): Dropout(p=0.0, inplace=False)
+                )
+                (output): SwinSelfOutput(
+                  (dense): Linear(in_features=256, out_features=256, bias=True)
+                  (dropout): Dropout(p=0.0, inplace=False)
+                )
+              )
+              (drop_path): SwinDropPath(p=0.1)
+              (layernorm_after): LayerNorm((256,), eps=1e-05, elementwise_affine=True)
+              (intermediate): SwinIntermediate(
+                (dense): Linear(in_features=256, out_features=1024, bias=True)
+                (intermediate_act_fn): GELUActivation()
+              )
+              (output): SwinOutput(
+                (dense): Linear(in_features=1024, out_features=256, bias=True)
+                (dropout): Dropout(p=0.0, inplace=False)
+              )
+            )
+          )
+          (downsample): SwinPatchMerging(
+            (reduction): Linear(in_features=1024, out_features=512, bias=False)
+            (norm): LayerNorm((1024,), eps=1e-05, elementwise_affine=True)
+          )
+        )
+        (2): SwinStage(
+          (blocks): ModuleList(
+            (0-17): 18 x SwinLayer(
+              (layernorm_before): LayerNorm((512,), eps=1e-05, elementwise_affine=True)
+              (attention): SwinAttention(
+                (self): SwinSelfAttention(
+                  (query): Linear(in_features=512, out_features=512, bias=True)
+                  (key): Linear(in_features=512, out_features=512, bias=True)
+                  (value): Linear(in_features=512, out_features=512, bias=True)
+                  (dropout): Dropout(p=0.0, inplace=False)
+                )
+                (output): SwinSelfOutput(
+                  (dense): Linear(in_features=512, out_features=512, bias=True)
+                  (dropout): Dropout(p=0.0, inplace=False)
+                )
+              )
+              (drop_path): SwinDropPath(p=0.1)
+              (layernorm_after): LayerNorm((512,), eps=1e-05, elementwise_affine=True)
+              (intermediate): SwinIntermediate(
+                (dense): Linear(in_features=512, out_features=2048, bias=True)
+                (intermediate_act_fn): GELUActivation()
+              )
+              (output): SwinOutput(
+                (dense): Linear(in_features=2048, out_features=512, bias=True)
+                (dropout): Dropout(p=0.0, inplace=False)
+              )
+            )
+          )
+          (downsample): SwinPatchMerging(
+            (reduction): Linear(in_features=2048, out_features=1024, bias=False)
+            (norm): LayerNorm((2048,), eps=1e-05, elementwise_affine=True)
+          )
+        )
+        (3): SwinStage(
+          (blocks): ModuleList(
+            (0-1): 2 x SwinLayer(
+              (layernorm_before): LayerNorm((1024,), eps=1e-05, elementwise_affine=True)
+              (attention): SwinAttention(
+                (self): SwinSelfAttention(
+                  (query): Linear(in_features=1024, out_features=1024, bias=True)
+                  (key): Linear(in_features=1024, out_features=1024, bias=True)
+                  (value): Linear(in_features=1024, out_features=1024, bias=True)
+                  (dropout): Dropout(p=0.0, inplace=False)
+                )
+                (output): SwinSelfOutput(
+                  (dense): Linear(in_features=1024, out_features=1024, bias=True)
+                  (dropout): Dropout(p=0.0, inplace=False)
+                )
+              )
+              (drop_path): SwinDropPath(p=0.1)
+              (layernorm_after): LayerNorm((1024,), eps=1e-05, elementwise_affine=True)
+              (intermediate): SwinIntermediate(
+                (dense): Linear(in_features=1024, out_features=4096, bias=True)
+                (intermediate_act_fn): GELUActivation()
+              )
+              (output): SwinOutput(
+                (dense): Linear(in_features=4096, out_features=1024, bias=True)
+                (dropout): Dropout(p=0.0, inplace=False)
+              )
+            )
+          )
+        )
+      )
+    )
+    (layernorm): LayerNorm((1024,), eps=1e-05, elementwise_affine=True)
+    (pooler): AdaptiveAvgPool1d(output_size=1)
+  )
+  (decoder): GPT2LMHeadModel(
+    (transformer): GPT2Model(
+      (wte): Embedding(50257, 768)
+      (wpe): Embedding(1024, 768)
+      (drop): Dropout(p=0.1, inplace=False)
+      (h): ModuleList(
+        (0-11): 12 x GPT2Block(
+          (ln_1): LayerNorm((768,), eps=1e-05, elementwise_affine=True)
+          (attn): GPT2Attention(
+            (c_attn): Conv1D(nf=2304, nx=768)
+            (c_proj): Conv1D(nf=768, nx=768)
+            (attn_dropout): Dropout(p=0.1, inplace=False)
+            (resid_dropout): Dropout(p=0.1, inplace=False)
+          )
+          (ln_2): LayerNorm((768,), eps=1e-05, elementwise_affine=True)
+          (crossattention): GPT2Attention(
+            (c_attn): Conv1D(nf=1536, nx=768)
+            (q_attn): Conv1D(nf=768, nx=768)
+            (c_proj): Conv1D(nf=768, nx=768)
+            (attn_dropout): Dropout(p=0.1, inplace=False)
+            (resid_dropout): Dropout(p=0.1, inplace=False)
+          )
+          (ln_cross_attn): LayerNorm((768,), eps=1e-05, elementwise_affine=True)
+          (mlp): GPT2MLP(
+            (c_fc): Conv1D(nf=3072, nx=768)
+            (c_proj): Conv1D(nf=768, nx=3072)
+            (act): NewGELUActivation()
+            (dropout): Dropout(p=0.1, inplace=False)
+          )
+        )
+      )
+      (ln_f): LayerNorm((768,), eps=1e-05, elementwise_affine=True)
+    )
+    (lm_head): Linear(in_features=768, out_features=50257, bias=False)
+  )
+  (enc_to_dec_proj): Linear(in_features=1024, out_features=768, bias=True)
+)
+2024-10-29 12:41:00,575 - ai.model - INFO - Conexión exitosa a Redis
+2024-10-29 12:42:19,263 - ai.model - INFO - Cargando modelo de visión...
+2024-10-29 12:42:25,146 - ai.model - INFO - Modelo cargado exitosamente
+2024-10-29 12:42:25,146 - ai.model - INFO - Dispositivo utilizado: cpu
+2024-10-29 12:42:25,146 - ai.model - INFO - Modelo: VisionEncoderDecoderModel(
+  (encoder): SwinModel(
+    (embeddings): SwinEmbeddings(
+      (patch_embeddings): SwinPatchEmbeddings(
+        (projection): Conv2d(3, 128, kernel_size=(4, 4), stride=(4, 4))
+      )
+      (norm): LayerNorm((128,), eps=1e-05, elementwise_affine=True)
+      (dropout): Dropout(p=0.0, inplace=False)
+    )
+    (encoder): SwinEncoder(
+      (layers): ModuleList(
+        (0): SwinStage(
+          (blocks): ModuleList(
+            (0-1): 2 x SwinLayer(
+              (layernorm_before): LayerNorm((128,), eps=1e-05, elementwise_affine=True)
+              (attention): SwinAttention(
+                (self): SwinSelfAttention(
+                  (query): Linear(in_features=128, out_features=128, bias=True)
+                  (key): Linear(in_features=128, out_features=128, bias=True)
+                  (value): Linear(in_features=128, out_features=128, bias=True)
+                  (dropout): Dropout(p=0.0, inplace=False)
+                )
+                (output): SwinSelfOutput(
+                  (dense): Linear(in_features=128, out_features=128, bias=True)
+                  (dropout): Dropout(p=0.0, inplace=False)
+                )
+              )
+              (drop_path): SwinDropPath(p=0.1)
+              (layernorm_after): LayerNorm((128,), eps=1e-05, elementwise_affine=True)
+              (intermediate): SwinIntermediate(
+                (dense): Linear(in_features=128, out_features=512, bias=True)
+                (intermediate_act_fn): GELUActivation()
+              )
+              (output): SwinOutput(
+                (dense): Linear(in_features=512, out_features=128, bias=True)
+                (dropout): Dropout(p=0.0, inplace=False)
+              )
+            )
+          )
+          (downsample): SwinPatchMerging(
+            (reduction): Linear(in_features=512, out_features=256, bias=False)
+            (norm): LayerNorm((512,), eps=1e-05, elementwise_affine=True)
+          )
+        )
+        (1): SwinStage(
+          (blocks): ModuleList(
+            (0-1): 2 x SwinLayer(
+              (layernorm_before): LayerNorm((256,), eps=1e-05, elementwise_affine=True)
+              (attention): SwinAttention(
+                (self): SwinSelfAttention(
+                  (query): Linear(in_features=256, out_features=256, bias=True)
+                  (key): Linear(in_features=256, out_features=256, bias=True)
+                  (value): Linear(in_features=256, out_features=256, bias=True)
+                  (dropout): Dropout(p=0.0, inplace=False)
+                )
+                (output): SwinSelfOutput(
+                  (dense): Linear(in_features=256, out_features=256, bias=True)
+                  (dropout): Dropout(p=0.0, inplace=False)
+                )
+              )
+              (drop_path): SwinDropPath(p=0.1)
+              (layernorm_after): LayerNorm((256,), eps=1e-05, elementwise_affine=True)
+              (intermediate): SwinIntermediate(
+                (dense): Linear(in_features=256, out_features=1024, bias=True)
+                (intermediate_act_fn): GELUActivation()
+              )
+              (output): SwinOutput(
+                (dense): Linear(in_features=1024, out_features=256, bias=True)
+                (dropout): Dropout(p=0.0, inplace=False)
+              )
+            )
+          )
+          (downsample): SwinPatchMerging(
+            (reduction): Linear(in_features=1024, out_features=512, bias=False)
+            (norm): LayerNorm((1024,), eps=1e-05, elementwise_affine=True)
+          )
+        )
+        (2): SwinStage(
+          (blocks): ModuleList(
+            (0-17): 18 x SwinLayer(
+              (layernorm_before): LayerNorm((512,), eps=1e-05, elementwise_affine=True)
+              (attention): SwinAttention(
+                (self): SwinSelfAttention(
+                  (query): Linear(in_features=512, out_features=512, bias=True)
+                  (key): Linear(in_features=512, out_features=512, bias=True)
+                  (value): Linear(in_features=512, out_features=512, bias=True)
+                  (dropout): Dropout(p=0.0, inplace=False)
+                )
+                (output): SwinSelfOutput(
+                  (dense): Linear(in_features=512, out_features=512, bias=True)
+                  (dropout): Dropout(p=0.0, inplace=False)
+                )
+              )
+              (drop_path): SwinDropPath(p=0.1)
+              (layernorm_after): LayerNorm((512,), eps=1e-05, elementwise_affine=True)
+              (intermediate): SwinIntermediate(
+                (dense): Linear(in_features=512, out_features=2048, bias=True)
+                (intermediate_act_fn): GELUActivation()
+              )
+              (output): SwinOutput(
+                (dense): Linear(in_features=2048, out_features=512, bias=True)
+                (dropout): Dropout(p=0.0, inplace=False)
+              )
+            )
+          )
+          (downsample): SwinPatchMerging(
+            (reduction): Linear(in_features=2048, out_features=1024, bias=False)
+            (norm): LayerNorm((2048,), eps=1e-05, elementwise_affine=True)
+          )
+        )
+        (3): SwinStage(
+          (blocks): ModuleList(
+            (0-1): 2 x SwinLayer(
+              (layernorm_before): LayerNorm((1024,), eps=1e-05, elementwise_affine=True)
+              (attention): SwinAttention(
+                (self): SwinSelfAttention(
+                  (query): Linear(in_features=1024, out_features=1024, bias=True)
+                  (key): Linear(in_features=1024, out_features=1024, bias=True)
+                  (value): Linear(in_features=1024, out_features=1024, bias=True)
+                  (dropout): Dropout(p=0.0, inplace=False)
+                )
+                (output): SwinSelfOutput(
+                  (dense): Linear(in_features=1024, out_features=1024, bias=True)
+                  (dropout): Dropout(p=0.0, inplace=False)
+                )
+              )
+              (drop_path): SwinDropPath(p=0.1)
+              (layernorm_after): LayerNorm((1024,), eps=1e-05, elementwise_affine=True)
+              (intermediate): SwinIntermediate(
+                (dense): Linear(in_features=1024, out_features=4096, bias=True)
+                (intermediate_act_fn): GELUActivation()
+              )
+              (output): SwinOutput(
+                (dense): Linear(in_features=4096, out_features=1024, bias=True)
+                (dropout): Dropout(p=0.0, inplace=False)
+              )
+            )
+          )
+        )
+      )
+    )
+    (layernorm): LayerNorm((1024,), eps=1e-05, elementwise_affine=True)
+    (pooler): AdaptiveAvgPool1d(output_size=1)
+  )
+  (decoder): GPT2LMHeadModel(
+    (transformer): GPT2Model(
+      (wte): Embedding(50257, 768)
+      (wpe): Embedding(1024, 768)
+      (drop): Dropout(p=0.1, inplace=False)
+      (h): ModuleList(
+        (0-11): 12 x GPT2Block(
+          (ln_1): LayerNorm((768,), eps=1e-05, elementwise_affine=True)
+          (attn): GPT2Attention(
+            (c_attn): Conv1D(nf=2304, nx=768)
+            (c_proj): Conv1D(nf=768, nx=768)
+            (attn_dropout): Dropout(p=0.1, inplace=False)
+            (resid_dropout): Dropout(p=0.1, inplace=False)
+          )
+          (ln_2): LayerNorm((768,), eps=1e-05, elementwise_affine=True)
+          (crossattention): GPT2Attention(
+            (c_attn): Conv1D(nf=1536, nx=768)
+            (q_attn): Conv1D(nf=768, nx=768)
+            (c_proj): Conv1D(nf=768, nx=768)
+            (attn_dropout): Dropout(p=0.1, inplace=False)
+            (resid_dropout): Dropout(p=0.1, inplace=False)
+          )
+          (ln_cross_attn): LayerNorm((768,), eps=1e-05, elementwise_affine=True)
+          (mlp): GPT2MLP(
+            (c_fc): Conv1D(nf=3072, nx=768)
+            (c_proj): Conv1D(nf=768, nx=3072)
+            (act): NewGELUActivation()
+            (dropout): Dropout(p=0.1, inplace=False)
+          )
+        )
+      )
+      (ln_f): LayerNorm((768,), eps=1e-05, elementwise_affine=True)
+    )
+    (lm_head): Linear(in_features=768, out_features=50257, bias=False)
+  )
+  (enc_to_dec_proj): Linear(in_features=1024, out_features=768, bias=True)
+)
+2024-10-29 12:42:25,496 - ai.model - INFO - Conexión exitosa a Redis
+2024-10-29 12:42:26,022 - ai.views - INFO - Conexión exitosa a MongoDB en la uri
+2024-10-29 12:42:26,022 - ai.views - INFO - Conexión exitosa a Redis en redis-11043.c274.us-east-1-3.ec2.redns.redis-cloud.com:11043/0
+2024-10-29 12:45:21,274 - ai.model - INFO - Cargando modelo de visión...
+2024-10-29 12:45:28,896 - ai.model - INFO - Modelo cargado exitosamente
+2024-10-29 12:45:28,897 - ai.model - INFO - Dispositivo utilizado: cpu
+2024-10-29 12:45:28,899 - ai.model - INFO - Modelo: VisionEncoderDecoderModel(
+  (encoder): SwinModel(
+    (embeddings): SwinEmbeddings(
+      (patch_embeddings): SwinPatchEmbeddings(
+        (projection): Conv2d(3, 128, kernel_size=(4, 4), stride=(4, 4))
+      )
+      (norm): LayerNorm((128,), eps=1e-05, elementwise_affine=True)
+      (dropout): Dropout(p=0.0, inplace=False)
+    )
+    (encoder): SwinEncoder(
+      (layers): ModuleList(
+        (0): SwinStage(
+          (blocks): ModuleList(
+            (0-1): 2 x SwinLayer(
+              (layernorm_before): LayerNorm((128,), eps=1e-05, elementwise_affine=True)
+              (attention): SwinAttention(
+                (self): SwinSelfAttention(
+                  (query): Linear(in_features=128, out_features=128, bias=True)
+                  (key): Linear(in_features=128, out_features=128, bias=True)
+                  (value): Linear(in_features=128, out_features=128, bias=True)
+                  (dropout): Dropout(p=0.0, inplace=False)
+                )
+                (output): SwinSelfOutput(
+                  (dense): Linear(in_features=128, out_features=128, bias=True)
+                  (dropout): Dropout(p=0.0, inplace=False)
+                )
+              )
+              (drop_path): SwinDropPath(p=0.1)
+              (layernorm_after): LayerNorm((128,), eps=1e-05, elementwise_affine=True)
+              (intermediate): SwinIntermediate(
+                (dense): Linear(in_features=128, out_features=512, bias=True)
+                (intermediate_act_fn): GELUActivation()
+              )
+              (output): SwinOutput(
+                (dense): Linear(in_features=512, out_features=128, bias=True)
+                (dropout): Dropout(p=0.0, inplace=False)
+              )
+            )
+          )
+          (downsample): SwinPatchMerging(
+            (reduction): Linear(in_features=512, out_features=256, bias=False)
+            (norm): LayerNorm((512,), eps=1e-05, elementwise_affine=True)
+          )
+        )
+        (1): SwinStage(
+          (blocks): ModuleList(
+            (0-1): 2 x SwinLayer(
+              (layernorm_before): LayerNorm((256,), eps=1e-05, elementwise_affine=True)
+              (attention): SwinAttention(
+                (self): SwinSelfAttention(
+                  (query): Linear(in_features=256, out_features=256, bias=True)
+                  (key): Linear(in_features=256, out_features=256, bias=True)
+                  (value): Linear(in_features=256, out_features=256, bias=True)
+                  (dropout): Dropout(p=0.0, inplace=False)
+                )
+                (output): SwinSelfOutput(
+                  (dense): Linear(in_features=256, out_features=256, bias=True)
+                  (dropout): Dropout(p=0.0, inplace=False)
+                )
+              )
+              (drop_path): SwinDropPath(p=0.1)
+              (layernorm_after): LayerNorm((256,), eps=1e-05, elementwise_affine=True)
+              (intermediate): SwinIntermediate(
+                (dense): Linear(in_features=256, out_features=1024, bias=True)
+                (intermediate_act_fn): GELUActivation()
+              )
+              (output): SwinOutput(
+                (dense): Linear(in_features=1024, out_features=256, bias=True)
+                (dropout): Dropout(p=0.0, inplace=False)
+              )
+            )
+          )
+          (downsample): SwinPatchMerging(
+            (reduction): Linear(in_features=1024, out_features=512, bias=False)
+            (norm): LayerNorm((1024,), eps=1e-05, elementwise_affine=True)
+          )
+        )
+        (2): SwinStage(
+          (blocks): ModuleList(
+            (0-17): 18 x SwinLayer(
+              (layernorm_before): LayerNorm((512,), eps=1e-05, elementwise_affine=True)
+              (attention): SwinAttention(
+                (self): SwinSelfAttention(
+                  (query): Linear(in_features=512, out_features=512, bias=True)
+                  (key): Linear(in_features=512, out_features=512, bias=True)
+                  (value): Linear(in_features=512, out_features=512, bias=True)
+                  (dropout): Dropout(p=0.0, inplace=False)
+                )
+                (output): SwinSelfOutput(
+                  (dense): Linear(in_features=512, out_features=512, bias=True)
+                  (dropout): Dropout(p=0.0, inplace=False)
+                )
+              )
+              (drop_path): SwinDropPath(p=0.1)
+              (layernorm_after): LayerNorm((512,), eps=1e-05, elementwise_affine=True)
+              (intermediate): SwinIntermediate(
+                (dense): Linear(in_features=512, out_features=2048, bias=True)
+                (intermediate_act_fn): GELUActivation()
+              )
+              (output): SwinOutput(
+                (dense): Linear(in_features=2048, out_features=512, bias=True)
+                (dropout): Dropout(p=0.0, inplace=False)
+              )
+            )
+          )
+          (downsample): SwinPatchMerging(
+            (reduction): Linear(in_features=2048, out_features=1024, bias=False)
+            (norm): LayerNorm((2048,), eps=1e-05, elementwise_affine=True)
+          )
+        )
+        (3): SwinStage(
+          (blocks): ModuleList(
+            (0-1): 2 x SwinLayer(
+              (layernorm_before): LayerNorm((1024,), eps=1e-05, elementwise_affine=True)
+              (attention): SwinAttention(
+                (self): SwinSelfAttention(
+                  (query): Linear(in_features=1024, out_features=1024, bias=True)
+                  (key): Linear(in_features=1024, out_features=1024, bias=True)
+                  (value): Linear(in_features=1024, out_features=1024, bias=True)
+                  (dropout): Dropout(p=0.0, inplace=False)
+                )
+                (output): SwinSelfOutput(
+                  (dense): Linear(in_features=1024, out_features=1024, bias=True)
+                  (dropout): Dropout(p=0.0, inplace=False)
+                )
+              )
+              (drop_path): SwinDropPath(p=0.1)
+              (layernorm_after): LayerNorm((1024,), eps=1e-05, elementwise_affine=True)
+              (intermediate): SwinIntermediate(
+                (dense): Linear(in_features=1024, out_features=4096, bias=True)
+                (intermediate_act_fn): GELUActivation()
+              )
+              (output): SwinOutput(
+                (dense): Linear(in_features=4096, out_features=1024, bias=True)
+                (dropout): Dropout(p=0.0, inplace=False)
+              )
+            )
+          )
+        )
+      )
+    )
+    (layernorm): LayerNorm((1024,), eps=1e-05, elementwise_affine=True)
+    (pooler): AdaptiveAvgPool1d(output_size=1)
+  )
+  (decoder): GPT2LMHeadModel(
+    (transformer): GPT2Model(
+      (wte): Embedding(50257, 768)
+      (wpe): Embedding(1024, 768)
+      (drop): Dropout(p=0.1, inplace=False)
+      (h): ModuleList(
+        (0-11): 12 x GPT2Block(
+          (ln_1): LayerNorm((768,), eps=1e-05, elementwise_affine=True)
+          (attn): GPT2Attention(
+            (c_attn): Conv1D(nf=2304, nx=768)
+            (c_proj): Conv1D(nf=768, nx=768)
+            (attn_dropout): Dropout(p=0.1, inplace=False)
+            (resid_dropout): Dropout(p=0.1, inplace=False)
+          )
+          (ln_2): LayerNorm((768,), eps=1e-05, elementwise_affine=True)
+          (crossattention): GPT2Attention(
+            (c_attn): Conv1D(nf=1536, nx=768)
+            (q_attn): Conv1D(nf=768, nx=768)
+            (c_proj): Conv1D(nf=768, nx=768)
+            (attn_dropout): Dropout(p=0.1, inplace=False)
+            (resid_dropout): Dropout(p=0.1, inplace=False)
+          )
+          (ln_cross_attn): LayerNorm((768,), eps=1e-05, elementwise_affine=True)
+          (mlp): GPT2MLP(
+            (c_fc): Conv1D(nf=3072, nx=768)
+            (c_proj): Conv1D(nf=768, nx=3072)
+            (act): NewGELUActivation()
+            (dropout): Dropout(p=0.1, inplace=False)
+          )
+        )
+      )
+      (ln_f): LayerNorm((768,), eps=1e-05, elementwise_affine=True)
+    )
+    (lm_head): Linear(in_features=768, out_features=50257, bias=False)
+  )
+  (enc_to_dec_proj): Linear(in_features=1024, out_features=768, bias=True)
+)
+2024-10-29 12:45:29,250 - ai.model - INFO - Conexión exitosa a Redis
+2024-10-29 12:45:29,685 - ai.views - INFO - Conexión exitosa a MongoDB en la uri
+2024-10-29 12:45:29,685 - ai.views - INFO - Conexión exitosa a Redis en redis-11043.c274.us-east-1-3.ec2.redns.redis-cloud.com:11043/0
+2024-10-29 12:58:27,837 - ai.model - INFO - Cargando modelo de visión...
+2024-10-29 12:58:35,101 - ai.model - INFO - Modelo cargado exitosamente
+2024-10-29 12:58:35,511 - ai.views - INFO - Conexión exitosa a MongoDB en la uri
+2024-10-29 12:58:35,511 - ai.views - INFO - Conexión exitosa a Redis en redis-11043.c274.us-east-1-3.ec2.redns.redis-cloud.com:11043/0
+2024-10-29 12:59:59,760 - ai.model - INFO - Cargando modelo de visión...
+2024-10-29 13:00:06,506 - ai.model - INFO - Modelo cargado exitosamente
+2024-10-29 13:00:06,843 - ai.views - INFO - Conexión exitosa a MongoDB en la uri
+2024-10-29 13:00:06,843 - ai.views - INFO - Conexión exitosa a Redis en redis-11043.c274.us-east-1-3.ec2.redns.redis-cloud.com:11043/0
+2024-10-29 13:03:23,652 - ai.model - INFO - Cargando modelo de visión...
+2024-10-29 13:03:31,066 - ai.model - INFO - Modelo cargado exitosamente
+2024-10-29 13:03:31,447 - ai.views - INFO - Conexión exitosa a MongoDB en la uri
+2024-10-29 13:03:31,447 - ai.views - INFO - Conexión exitosa a Redis en redis-11043.c274.us-east-1-3.ec2.redns.redis-cloud.com:11043/0
+2024-10-29 13:19:33,874 - ai.model - INFO - Cargando modelo de visión...
+2024-10-29 13:19:41,369 - ai.model - INFO - Modelo cargado exitosamente
+2024-10-29 13:19:41,710 - ai.views - INFO - Conexión exitosa a MongoDB en la uri
+2024-10-29 13:19:41,710 - ai.views - INFO - Conexión exitosa a Redis en redis-11043.c274.us-east-1-3.ec2.redns.redis-cloud.com:11043/0
+2024-10-29 13:22:49,398 - ai.model - INFO - Cargando modelo de visión...
+2024-10-29 13:22:57,978 - ai.model - INFO - Modelo cargado exitosamente
+2024-10-29 13:22:58,404 - ai.views - INFO - Conexión exitosa a MongoDB en la uri
+2024-10-29 13:22:58,404 - ai.views - INFO - Conexión exitosa a Redis en redis-11043.c274.us-east-1-3.ec2.redns.redis-cloud.com:11043/0
+2024-10-29 13:23:57,103 - ai.model - INFO - Cargando modelo de visión...
+2024-10-29 13:24:03,040 - ai.model - INFO - Modelo cargado exitosamente
+2024-10-29 13:24:03,324 - ai.views - INFO - Conexión exitosa a MongoDB en la uri
+2024-10-29 13:24:03,324 - ai.views - INFO - Conexión exitosa a Redis en redis-11043.c274.us-east-1-3.ec2.redns.redis-cloud.com:11043/0
+2024-10-29 13:25:42,511 - ai.model - INFO - Cargando modelo de visión...
+2024-10-29 13:25:49,340 - ai.model - INFO - Modelo cargado exitosamente
+2024-10-29 13:25:49,618 - ai.views - INFO - Conexión exitosa a MongoDB en la uri
+2024-10-29 13:25:49,618 - ai.views - INFO - Conexión exitosa a Redis en redis-11043.c274.us-east-1-3.ec2.redns.redis-cloud.com:11043/0
+2024-10-29 13:30:50,601 - ai.model - INFO - Cargando modelo de visión...
+2024-10-29 13:30:57,140 - ai.model - INFO - Modelo cargado exitosamente
+2024-10-29 13:30:57,466 - ai.views - INFO - Conexión exitosa a MongoDB en la uri
+2024-10-29 13:30:57,471 - ai.views - INFO - Conexión exitosa a Redis en redis-11043.c274.us-east-1-3.ec2.redns.redis-cloud.com:11043/0
+2024-10-29 13:34:35,683 - ai.model - INFO - Cargando modelo de visión...
+2024-10-29 13:34:43,030 - ai.model - INFO - Modelo cargado exitosamente
+2024-10-29 13:34:43,384 - ai.views - INFO - Conexión exitosa a MongoDB en la uri
+2024-10-29 13:34:43,384 - ai.views - INFO - Conexión exitosa a Redis en redis-11043.c274.us-east-1-3.ec2.redns.redis-cloud.com:11043/0

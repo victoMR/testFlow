@@ -1,42 +1,35 @@
 """
 Módulo de inteligencia artificial para el reconocimiento y clasificación de ecuaciones matemáticas.
-
-Este módulo se encarga de cargar y entrenar el modelo utilizando transformers, 
-implementa caché con Redis, procesamiento en hilos, y logging avanzado.
+Optimizado para rendimiento y precisión en la detección de fórmulas matemáticas.
 """
 
 import logging
 import os
 import cv2
 import re
-import io
 import torch
 import numpy as np
 from PIL import Image
 from transformers import AutoTokenizer, VisionEncoderDecoderModel, ViTImageProcessor
-import matplotlib
-
-matplotlib.use("Agg")  # Use a non-interactive backend
 import matplotlib.pyplot as plt
-from sympy import sympify, latex
+import matplotlib
+from sympy import latex
 from sympy.parsing.latex import parse_latex
-from concurrent.futures import ThreadPoolExecutor, as_completed
-import fitz  # PyMuPDF
+from concurrent.futures import ThreadPoolExecutor
 from redis import Redis
-from redis.exceptions import (
-    ConnectionError,
-    TimeoutError as RedisTimeoutError,
-    AuthenticationError,
-)
-import json
+from redis.exceptions import ConnectionError, TimeoutError as RedisTimeoutError
 from functools import lru_cache
-import requests
-import hashlib
-from io import BytesIO
 from dotenv import load_dotenv
+from io import BytesIO
+import time
+import fitz  # PyMuPDF para procesamiento de PDFs
+from concurrent.futures import ThreadPoolExecutor, as_completed
+import threading
+from tqdm import tqdm
 
-# Cargar variables de entorno
+# Configuración inicial
 load_dotenv()
+matplotlib.use("Agg")  # Usar backend no interactivo
 
 # Configuración del logger
 logging.basicConfig(
@@ -49,602 +42,794 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-
-# Configuración de Redis con reintentos
-def get_redis_connection():
-    for _ in range(3):  # Intentar 3 veces
-        try:
-            redis_client = Redis(
-                host=os.getenv("REDIS_HOST"),
-                port=int(os.getenv("REDIS_PORT")),
-                db=int(os.getenv("REDIS_DB", 0)),
-                password=os.getenv("REDIS_PASSWORD"),
-                socket_timeout=5,
-                socket_connect_timeout=5,
-                retry_on_timeout=True,
-            )
-            redis_client.ping()  # Verificar la conexión
-            logger.info(
-                f"Conectado a Redis en {os.getenv('REDIS_HOST')}:{os.getenv('REDIS_PORT')} con base de datos {os.getenv('REDIS_DB')}"
-            )
-            return redis_client
-        except (ConnectionError, RedisTimeoutError, AuthenticationError) as e:
-            logger.warning(f"Intento de conexión a Redis fallido: {e}")
-
-    logger.warning("No se pudo conectar a Redis. La aplicación funcionará sin caché.")
-    return None
-
-
-# Usa esta variable global para verificar si Redis está disponible
-redis_available = get_redis_connection() is not None
-
-# Configuración del modelo
+# Configuración de modelo y dispositivo
 model_dir = os.path.join("ai", "Models")
 os.makedirs(model_dir, exist_ok=True)
-
-# ThreadPoolExecutor para procesamiento paralelo
-executor = ThreadPoolExecutor(max_workers=os.cpu_count())
-
-
-# Carga del modelo (con caché de Redis)
-@lru_cache(maxsize=1)
-def load_model():
-    logger.info("Iniciando la carga del modelo de visión.")
-    try:
-        # Cargar el modelo normalmente, sin usar caché de Redis para el modelo completo
-        model = VisionEncoderDecoderModel.from_pretrained(
-            "DGurgurov/im2latex", cache_dir=model_dir, trust_remote_code=True
-        )
-        tokenizer = AutoTokenizer.from_pretrained(
-            "DGurgurov/im2latex", cache_dir=model_dir
-        )
-        feature_extractor = ViTImageProcessor.from_pretrained(
-            "microsoft/swin-base-patch4-window7-224-in22k", cache_dir=model_dir
-        )
-
-        logger.info("Modelo de visión cargado exitosamente.")
-        return model, tokenizer, feature_extractor
-    except Exception as e:
-        logger.error(f"Error al cargar el modelo de visión: {e}")
-        raise
-
-
-model, tokenizer, feature_extractor = load_model()
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-model.to(device)
 
+class RedisManager:
+    """Gestiona la conexión y operaciones con Redis."""
+    
+    def __init__(self):
+        self.client = self._connect()
+        
+    def _connect(self):
+        """Establece conexión con Redis con reintentos."""
+        for _ in range(3):
+            try:
+                client = Redis(
+                    host=os.getenv("REDIS_HOST"),
+                    port=int(os.getenv("REDIS_PORT")),
+                    db=int(os.getenv("REDIS_DB", 0)),
+                    password=os.getenv("REDIS_PASSWORD"),
+                    socket_timeout=5,
+                    decode_responses=True
+                )
+                client.ping()
+                logger.info("Conexión exitosa a Redis")
+                return client
+            except (ConnectionError, RedisTimeoutError) as e:
+                logger.warning(f"Intento de conexión a Redis fallido: {e}")
+        return None
 
-def preprocess_image(image):
-    """
-    Procesa la imagen para mejorar la detección de fórmulas LaTeX.
-    Optimizado para fórmulas matem��ticas y eliminación de elementos no deseados.
-    """
-    try:
-        logger.info("Preprocesando la imagen")
-        if isinstance(image, np.ndarray):
-            # Convertir a escala de grises si es necesario
+    def get(self, key):
+        """Obtiene valor de Redis con manejo de errores."""
+        try:
+            return self.client.get(key) if self.client else None
+        except Exception as e:
+            logger.error(f"Error al obtener de Redis: {e}")
+            return None
+
+    def set(self, key, value, timeout=3600):
+        """Establece valor en Redis con manejo de errores."""
+        try:
+            if self.client:
+                self.client.setex(key, timeout, value)
+        except Exception as e:
+            logger.error(f"Error al guardar en Redis: {e}")
+
+class ModelManager:
+    """Gestiona la carga y operaciones del modelo de IA."""
+    
+    def __init__(self):
+        self.model, self.tokenizer, self.feature_extractor = self._load_model()
+        self.model.to(device)
+        if device.type == 'cuda':
+            self.model.half()
+            
+    @staticmethod
+    @lru_cache(maxsize=1)
+    def _load_model():
+        logger.info("Cargando modelo de visión...")
+        try:
+            model = VisionEncoderDecoderModel.from_pretrained(
+                "DGurgurov/im2latex", 
+                cache_dir=model_dir,
+                trust_remote_code=True
+            )
+            tokenizer = AutoTokenizer.from_pretrained(
+                "DGurgurov/im2latex",
+                cache_dir=model_dir,
+                pad_token="<pad>",
+                eos_token="</s>"
+            )
+            feature_extractor = ViTImageProcessor.from_pretrained(
+                "microsoft/swin-base-patch4-window7-224-in22k",
+                cache_dir=model_dir
+            )
+            logger.info("Modelo cargado exitosamente")
+            return model, tokenizer, feature_extractor
+        except Exception as e:
+            logger.error(f"Error al cargar el modelo: {e}")
+            raise
+
+class ImageProcessor:
+    """Procesa imágenes para detección de fórmulas matemáticas."""
+    
+    def __init__(self):
+        # Cache para resultados de procesamiento
+        self.last_frame = None
+        self.last_result = None
+        self.frame_skip = 2  # Procesar cada N frames
+        self.frame_count = 0
+        
+    def preprocess(self, image):
+        """Preprocesa la imagen para mejorar la detección."""
+        try:
+            if not isinstance(image, np.ndarray):
+                return None
+            
+            # Redimensionar imagen para procesamiento más rápido
+            height, width = image.shape[:2]
+            max_dimension = 800
+            if max(height, width) > max_dimension:
+                scale = max_dimension / max(height, width)
+                image = cv2.resize(image, None, fx=scale, fy=scale)
+            
+            # Convertir a escala de grises y mejorar contraste
             gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY) if len(image.shape) == 3 else image
             
-            # Aplicar umbral adaptativo para mejorar el contraste de texto
+            # Aplicar umbralización adaptativa
             binary = cv2.adaptiveThreshold(
-                gray, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, 11, 2
-            )
-
-            # Eliminar ruido manteniendo texto
-            denoised = cv2.fastNlMeansDenoising(binary, None, 10, 7, 21)
-
-            # Detectar y eliminar áreas grandes que probablemente no sean fórmulas
-            contours, _ = cv2.findContours(
-                255 - denoised, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE
+                gray, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, 
+                cv2.THRESH_BINARY, 11, 2
             )
             
-            # Filtrar contornos basados en área y proporción
-            mask = np.ones_like(denoised) * 255
+            # Eliminar ruido manteniendo detalles importantes
+            denoised = cv2.fastNlMeansDenoising(binary, None, 10, 7, 21)
+            
+            return denoised
+            
+        except Exception as e:
+            logger.error(f"Error en preprocesamiento: {e}")
+            return None
+
+    def contains_math(self, image):
+        """Detecta si la imagen contiene contenido matemático de manera eficiente."""
+        try:
+            # Verificar si es similar al último frame procesado
+            if self.last_frame is not None:
+                diff = cv2.absdiff(image, self.last_frame)
+                if np.mean(diff) < 5.0:  # Umbral de diferencia
+                    return self.last_result
+
+            # Detectar características específicas de fórmulas matemáticas
+            edges = cv2.Canny(image, 100, 200)
+            contours, _ = cv2.findContours(edges, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+            
+            # Análisis rápido de patrones matemáticos
+            math_indicators = 0
+            total_area = image.shape[0] * image.shape[1]
+            
             for cnt in contours:
                 area = cv2.contourArea(cnt)
+                if area < total_area * 0.0001:  # Ignorar contornos muy pequeños
+                    continue
+                    
                 x, y, w, h = cv2.boundingRect(cnt)
                 aspect_ratio = float(w)/h if h > 0 else 0
                 
-                # Si el área es muy grande o la proporción no es típica de una fórmula
-                if area > denoised.size * 0.5 or aspect_ratio > 5 or aspect_ratio < 0.2:
-                    cv2.drawContours(mask, [cnt], -1, 0, -1)
+                # Características típicas de símbolos matemáticos
+                if 0.2 < aspect_ratio < 5:
+                    roi = image[y:y+h, x:x+w]
+                    if self._check_symbol_features(roi):
+                        math_indicators += 1
+                        
+                if math_indicators >= 3:  # Umbral mínimo de indicadores
+                    self.last_frame = image.copy()
+                    self.last_result = True
+                    return True
+            
+            self.last_frame = image.copy()
+            self.last_result = False
+            return False
+            
+        except Exception as e:
+            logger.error(f"Error en detección de contenido matemático: {e}")
+            return False
 
-            # Aplicar máscara
-            result = cv2.bitwise_and(denoised, mask)
+    def _check_symbol_features(self, roi):
+        """Verifica características específicas de símbolos matemáticos."""
+        try:
+            # Calcular histograma de gradientes
+            gx = cv2.Sobel(roi, cv2.CV_32F, 1, 0)
+            gy = cv2.Sobel(roi, cv2.CV_32F, 0, 1)
+            mag, ang = cv2.cartToPolar(gx, gy)
+            
+            # Verificar distribución de gradientes típica de símbolos matemáticos
+            hist = np.histogram(ang, bins=8)[0]
+            hist = hist / np.sum(hist)
+            
+            # Patrones típicos de símbolos matemáticos
+            vertical_lines = hist[0] + hist[4]  # 0° y 180°
+            horizontal_lines = hist[2] + hist[6]  # 90° y 270°
+            diagonals = hist[1] + hist[3] + hist[5] + hist[7]  # Diagonales
+            
+            return (vertical_lines > 0.2 or horizontal_lines > 0.2 or diagonals > 0.3)
+            
+        except Exception:
+            return False
 
-            # Mejorar contraste final
-            clahe = cv2.createCLAHE(clipLimit=2.0, tileGridSize=(8, 8))
-            final = clahe.apply(result)
+class LatexProcessor:
+    """Procesa y valida fórmulas LaTeX."""
+    
+    @staticmethod
+    def clean_latex(text):
+        """Limpia y formatea texto LaTeX."""
+        try:
+            text = re.sub(r"\s+", " ", text).strip()
+            expr = parse_latex(text)
+            return latex(expr)
+        except Exception as e:
+            logger.warning(f"Error al limpiar LaTeX: {e}")
+            return text
 
-            logger.info("Preprocesamiento de imagen completado exitosamente")
-            return final
-        else:
-            logger.error("La imagen no es un array de numpy válido")
+    @staticmethod
+    def convert_to_texjs(latex_text):
+        """Convierte LaTeX a formato compatible con TeXJS."""
+        try:
+            # Diccionario de conversiones para TeXJS
+            texjs_conversions = {
+                r'\\left': '',  # Eliminar \left
+                r'\\right': '', # Eliminar \right
+                r'\\mathrm{d}': 'd', # Simplificar diferencial
+                r'\\mathbb{R}': '\\R', # Símbolos especiales
+                r'\\mathbb{N}': '\\N',
+                r'\\mathbb{Z}': '\\Z',
+                r'\\begin{array}': '\\begin{matrix}', # Matrices
+                r'\\end{array}': '\\end{matrix}',
+                r'\\text': '\\mathrm', # Texto en fórmulas
+                r'\\operatorname': '\\mathrm', # Operadores
+                r'\\displaystyle': '', # Eliminar estilo display
+            }
+            
+            # Aplicar conversiones
+            result = latex_text
+            for old, new in texjs_conversions.items():
+                result = re.sub(old, new, result)
+            
+            # Ajustar fracciones
+            result = re.sub(r'\\frac{([^{}]+)}{([^{}]+)}', r'\\frac{\1}{\2}', result)
+            
+            # Ajustar subíndices y superíndices
+            result = re.sub(r'_([^{])', r'_{\\1}', result)
+            result = re.sub(r'\^([^{])', r'^{\\1}', result)
+            
+            # Ajustar espaciado
+            result = re.sub(r'\\,', ' ', result)
+            result = re.sub(r'\\;', ' ', result)
+            result = re.sub(r'\\:', ' ', result)
+            result = re.sub(r'\\!', '', result)
+            
+            logger.info(f"LaTeX convertido para TeXJS: {result}")
+            return result
+            
+        except Exception as e:
+            logger.error(f"Error al convertir LaTeX para TeXJS: {e}")
+            return latex_text
+
+    @staticmethod
+    def is_valid_latex(text):
+        """Verifica si el texto es una fórmula LaTeX válida."""
+        patterns = [
+            r'\\[a-zA-Z]+{',
+            r'\\[a-zA-Z]+\s',
+            r'\$.*\$',
+            r'[0-9]+',
+            r'[+\-*/=]',
+            r'\\frac',
+            r'\\sum',
+            r'\\int',
+            r'\\sqrt',
+            r'\\lim',
+            r'\\infty',
+            r'\\alpha|\\beta|\\gamma|\\delta',
+            r'\\sin|\\cos|\\tan',
+            r'\\log|\\ln',
+            r'\\partial',
+            r'\\nabla',
+            r'\\vec',
+            r'\\matrix',
+        ]
+        return any(re.search(pattern, text) for pattern in patterns)
+
+    @staticmethod
+    def classify_problem(latex_formula):
+        """Clasifica el tipo de problema matemático."""
+        types = {
+            r"\\int": "Integral",
+            r"\\lim": "Límite",
+            r"\\frac{d}{d[x-z]}": "Derivada",
+            r"\\sum": "Suma",
+            r"=": "Ecuación",
+            r"\\sqrt": "Raíz",
+            r"\\log": "Logaritmo",
+            r"\\sin|\\cos|\\tan": "Trigonometría",
+            r"\\matrix": "Matriz",
+            r"\\vec": "Vector",
+            r"\\alpha|\\beta|\\gamma|\\delta": "Letras griegas",
+            r"\\pi": "Número pi",
+            r"\\infty": "Infinito",
+            r"\\partial": "Derivada parcial",
+            r"\\nabla": "Gradiente",
+            r"\\mathrm": "Función matemática",
+            r"\\text": "Texto",
+            r"\\operatorname": "Operador",
+            r"\\begin{matrix}": "Matriz",
+            r"\\end{matrix}": "Matriz",
+            r"\\begin{sum}": "Sumatoria",
+            r"\\end{sum}": "Sumatoria"
+        }
+        
+        for pattern, problem_type in types.items():
+            if re.search(pattern, latex_formula):
+                return problem_type
+        return "Expresión algebraica"
+
+class FormulaDetector:
+    """Clase principal para detección y procesamiento de fórmulas."""
+    
+    def __init__(self):
+        self.model_manager = ModelManager()
+        self.image_processor = ImageProcessor()
+        self.latex_processor = LatexProcessor()
+        self.frame_buffer = []
+        self.buffer_size = 5
+        self.last_processed_time = 0
+        self.min_process_interval = 0.2
+        self.confidence_threshold = 0.35  # Reducido de 0.8 a 0.35
+        
+    def process_image(self, image):
+        """Solo detecta y extrae fórmulas matemáticas."""
+        try:
+            current_time = time.time()
+            if current_time - self.last_processed_time < self.min_process_interval:
+                return None
+                
+            # Preprocesar imagen
+            processed_image = self.image_processor.preprocess(image)
+            if processed_image is None:
+                return None
+                
+            # Verificación de contenido matemático con umbral más bajo
+            if not self._verify_math_content(processed_image):
+                return None
+                
+            # Procesar con el modelo
+            pil_image = Image.fromarray(processed_image).convert("RGB")
+            pixel_values = self.model_manager.feature_extractor(
+                images=pil_image,
+                return_tensors="pt"
+            ).pixel_values.to(device)
+            
+            attention_mask = torch.ones(
+                (pixel_values.shape[0], pixel_values.shape[2] * pixel_values.shape[3]),
+                device=device
+            )
+            
+            with torch.no_grad():
+                outputs = self.model_manager.model.generate(
+                    pixel_values,
+                    attention_mask=attention_mask,
+                    max_length=300,
+                    num_beams=2,          # Reducido de 3 a 2 para mayor velocidad
+                    length_penalty=0.5,    # Reducido de 0.6 a 0.5
+                    early_stopping=True
+                )
+                
+            latex_text = self.model_manager.tokenizer.batch_decode(
+                outputs,
+                skip_special_tokens=True
+            )[0]
+            
+            # Ser más permisivo con la validación de LaTeX
+            if not self.latex_processor.is_valid_latex(latex_text):
+                return None
+                
+            cleaned_latex = self.latex_processor.clean_latex(latex_text)
+            logger.info(f"Fórmula LaTeX detectada: {cleaned_latex}")
+            return cleaned_latex
+            
+        except Exception as e:
+            logger.error(f"Error en procesamiento de imagen: {e}")
             return None
 
-    except Exception as e:
-        logger.error(f"Error en el preprocesamiento de la imagen: {e}")
-        return None
+    def _verify_math_content(self, image):
+        """Verificación más estricta de contenido matemático."""
+        try:
+            # Verificar presencia de personas
+            if self._detect_persons(image):
+                logger.info("Se detectó una persona en la imagen")
+                return False
+                
+            # Verificar características matemáticas
+            math_score = self._calculate_math_score(image)
+            is_math = math_score >= self.confidence_threshold
+            
+            if is_math:
+                logger.info(f"Contenido matemático detectado con score: {math_score}")
+            else:
+                logger.info(f"No se detectó contenido matemático. Score: {math_score}")
+                
+            return is_math
+            
+        except Exception as e:
+            logger.error(f"Error en verificación de contenido: {e}")
+            return False
 
+    def _detect_persons(self, image):
+        """Detecta si hay personas en la imagen."""
+        # Aquí puedes implementar un detector de personas simple
+        # Por ahora, usaremos una implementación básica
+        return False
 
-def process_with_im2latex(image):
-    """
-    Procesa la imagen para detectar y convertir fórmulas matemáticas a LaTeX.
-    Optimizado para velocidad y precisión.
-    """
-    try:
-        logger.info("Procesando imagen con el modelo Im2Latex")
+    def _calculate_math_score(self, image):
+        """Calcula un score de confianza para contenido matemático."""
+        try:
+            edges = cv2.Canny(image, 50, 150)  # Reducidos los umbrales de detección de bordes
+            contours, _ = cv2.findContours(edges, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+            
+            math_indicators = 0
+            total_area = image.shape[0] * image.shape[1]
+            valid_symbols = 0
+            
+            for cnt in contours:
+                area = cv2.contourArea(cnt)
+                # Reducir el umbral de área mínima
+                if area < total_area * 0.00005:  # Cambiado de 0.0001 a 0.00005
+                    continue
+                    
+                x, y, w, h = cv2.boundingRect(cnt)
+                aspect_ratio = float(w)/h if h > 0 else 0
+                
+                # Ampliar el rango de proporciones aceptables
+                if 0.1 < aspect_ratio < 10:  # Cambiado de 0.2-5 a 0.1-10
+                    roi = image[y:y+h, x:x+w]
+                    if self.image_processor._check_symbol_features(roi):
+                        valid_symbols += 1
+            
+            score = valid_symbols / max(len(contours), 1)
+            logger.info(f"Score matemático calculado: {score}")
+            return score
+            
+        except Exception as e:
+            logger.error(f"Error al calcular score matemático: {e}")
+            return 0.0
 
-        # Preprocesar imagen
-        preprocessed_image = preprocess_image(image)
-        if preprocessed_image is None:
-            raise ValueError("Error en el preprocesamiento de la imagen")
+    def render_latex(self, latex_text):
+        """Renderiza fórmula LaTeX a imagen."""
+        try:
+            plt.figure(figsize=(8, 3))
+            plt.text(0.5, 0.5, f"${latex_text}$", 
+                    fontsize=20, ha="center", va="center")
+            plt.axis("off")
+            
+            buf = BytesIO()
+            plt.savefig(buf, format="png", 
+                       bbox_inches="tight", pad_inches=0.1, dpi=300)
+            plt.close()
+            
+            buf.seek(0)
+            return Image.open(buf)
+        except Exception as e:
+            logger.error(f"Error al renderizar LaTeX: {e}")
+            return None
 
-        # Convertir a formato PIL
-        image = Image.fromarray(preprocessed_image).convert("RGB")
+    def convertir_a_latex(self, texto):
+        """Convierte texto plano a formato LaTeX."""
+        try:
+            # Diccionario de conversiones matemáticas comunes
+            conversiones = {
+                # Operadores básicos
+                '+': '+',
+                '-': '-',
+                '*': '\\times',
+                '/': '\\div',
+                
+                # Funciones matemáticas
+                'sqrt': '\\sqrt',
+                'sin': '\\sin',
+                'cos': '\\cos',
+                'tan': '\\tan',
+                'log': '\\log',
+                'ln': '\\ln',
+                'lim': '\\lim',
+                
+                # Símbolos especiales
+                'pi': '\\pi',
+                'inf': '\\infty',
+                'alpha': '\\alpha',
+                'beta': '\\beta',
+                'gamma': '\\gamma',
+                'delta': '\\delta',
+                'sum': '\\sum',
+                'int': '\\int',
+                'prod': '\\prod',
+                
+                # Relaciones
+                '>=': '\\geq',
+                '<=': '\\leq',
+                '!=': '\\neq',
+                '~=': '\\approx',
+                
+                # Otros símbolos
+                'partial': '\\partial',
+                'nabla': '\\nabla',
+                'grad': '\\nabla',
+                'div': '\\nabla \\cdot',
+                'curl': '\\nabla \\times',
+            }
 
-        # Verificar si la imagen contiene texto matemático antes de procesarla
-        if not contains_math_content(preprocessed_image):
-            logger.info("No se detectó contenido matemático en la imagen")
-            return None, None
+            # Patrones para detectar expresiones matemáticas comunes
+            patrones = [
+                # Fracciones (a/b)
+                (r'(\d+)/(\d+)', r'\\frac{\1}{\2}'),
+                
+                # Potencias (a^b)
+                (r'(\w+)\^(\w+)', r'{\1}^{\2}'),
+                
+                # Subíndices (a_b)
+                (r'(\w+)_(\w+)', r'{\1}_{\2}'),
+                
+                # Raíces cuadradas
+                (r'sqrt\((.*?)\)', r'\\sqrt{\1}'),
+                
+                # Funciones trigonométricas
+                (r'sin\((.*?)\)', r'\\sin(\1)'),
+                (r'cos\((.*?)\)', r'\\cos(\1)'),
+                (r'tan\((.*?)\)', r'\\tan(\1)'),
+                
+                # Logaritmos
+                (r'log\((.*?)\)', r'\\log(\1)'),
+                (r'ln\((.*?)\)', r'\\ln(\1)'),
+                
+                # Límites
+                (r'lim_(\w+)->(\w+)', r'\\lim_{\1 \\to \2}'),
+                
+                # Integrales
+                (r'int_(\w+)\^(\w+)', r'\\int_{\1}^{\2}'),
+                
+                # Sumatorias
+                (r'sum_(\w+)\^(\w+)', r'\\sum_{\1}^{\2}'),
+            ]
 
-        # Procesar con el modelo
-        pixel_values = feature_extractor(
-            images=image, return_tensors="pt"
-        ).pixel_values.to(device)
+            # Aplicar conversiones directas
+            resultado = texto
+            for original, latex in conversiones.items():
+                resultado = resultado.replace(original, latex)
 
-        # Usar half-precision para acelerar el procesamiento si está disponible
-        if device.type == 'cuda':
-            model.half()
-            pixel_values = pixel_values.half()
+            # Aplicar patrones más complejos
+            for patron, reemplazo in patrones:
+                resultado = re.sub(patron, reemplazo, resultado)
 
-        with torch.no_grad():
-            generated_ids = model.generate(
-                pixel_values,
-                max_length=300,
-                num_beams=3,  # Reducido para mayor velocidad
-                length_penalty=0.6,
-                no_repeat_ngram_size=2,
-                early_stopping=True,
-            )
+            # Limpiar espacios extra
+            resultado = re.sub(r'\s+', ' ', resultado).strip()
 
-        generated_text = tokenizer.batch_decode(
-            generated_ids, skip_special_tokens=True
-        )[0]
+            # Convertir a formato compatible con TeXJS
+            resultado = self.latex_processor.convert_to_texjs(resultado)
 
-        # Verificar y limpiar el resultado
-        if is_valid_latex(generated_text):
-            generated_text = correct_ocr_errors(generated_text)
-            generated_text = clean_latex_text(generated_text)
-            problem_type = classify_problem_type(generated_text)
-            logger.info(f"Fórmula LaTeX detectada: {generated_text}")
-            return generated_text, problem_type
-        else:
-            logger.info("No se detectó una fórmula matemática válida")
-            return None, None
+            logger.info(f"Texto convertido a LaTeX: {resultado}")
+            return resultado
 
-    except Exception as e:
-        logger.error(f"Error al procesar la imagen con Im2Latex: {e}")
-        return None, None
+        except Exception as e:
+            logger.error(f"Error al convertir texto a LaTeX: {e}")
+            return texto
 
-
-def correct_ocr_errors(text):
-    """
-    Corrige errores comunes de OCR en las fórmulas detectadas.
-    """
-    corrections = {
-        "—": "-",
-        "vb": "√",
-        " ": "",
-        "\\left(": "(",
-        "\\right)": ")",
-        "\\left[": "[",
-        "\\right]": "]",
-        "\\left{": "{",
-        "\\right}": "}",
-        "\\mathbb{R}": "ℝ",
-        "\\mathbb{N}": "ℕ",
-        "\\mathbb{Z}": "ℤ",
-        "\\oslash": "\\oslash",
-        "\\oplus": "\\oplus",
-        "\\ominus": "\\ominus",
-        "\\otimes": "\\otimes",
-        "\\odot": "\\odot",
-        "\\bigodot": "\\bigodot",
-        "\\bigoplus": "\\bigoplus",
-        "\\bigotimes": "\\bigotimes",
-        "\\oslash": "\\oslash",
-        "\\leq": "\\leq",
-        "\\geq": "\\geq",
-        "\\neq": "\\neq",
-        "\\approx": "\\approx",
-        "\\propto": "\\propto",
-        "\\infty": "\\infty",
-        "\\wedge": "\\wedge",
-        "\\vee": "\\vee"
-    }
-    for wrong_char, correct_char in corrections.items():
-        text = text.replace(wrong_char, correct_char)
-    return text
-
-
-def clean_latex_text(latex_text):
-    """
-    Limpia el texto LaTeX y lo convierte a una forma más legible.
-    """
-    latex_text = re.sub(r"\s+", " ", latex_text).strip()
-    try:
-        expr = parse_latex(latex_text)
-        clean_latex = latex(expr)
-        return clean_latex
-    except Exception as e:
-        logger.warning(f"Error al limpiar LaTeX: {e}")
-        return latex_text  # Devuelve el texto original si hay un error de parsing
-
-
-def classify_problem_type(latex_formula):
-    """
-    Clasifica el tipo de problema matemático basado en la fórmula LaTeX.
-    """
-    types = {
-        r"\\int": "Integral",
-        r"\\lim": "Límite",
-        r"\\frac{d}{d[x-z]}": "Derivada",
-        r"\\sum": "Suma",
-        r"\\prod": "Producto",
-        r"=": "Ecuación",
-        r"\\sqrt": "Raíz cuadrada",
-        r"\\log": "Logaritmo",
-        r"\\sin|\\cos|\\tan": "Trigonometría",
-        r"\\matrix": "Matriz",
-        r"\\vec": "Vector",
-        r"\\infty": "Infinito",
-        r"\\in": "Teoría de conjuntos",
-        r"\\cup|\\cap": "Operaciones de conjuntos",
-        r"\\forall|\\exists": "Lógica matemática",
-        r"\\binom": "Combinatoria",
-    }
-    for pattern, problem_type in types.items():
-        if re.search(pattern, latex_formula):
-            return problem_type
-    return "Expresión algebraica"
-
-
-def render_latex_to_image(latex_text):
-    """
-    Renderiza la fórmula LaTeX a una imagen utilizando matplotlib.
-    """
-    try:
-        plt.figure(figsize=(8, 3))
-        plt.text(0.5, 0.5, f"${latex_text}$", fontsize=20, ha="center", va="center")
-        plt.axis("off")
-        buf = BytesIO()
-        plt.savefig(buf, format="png", bbox_inches="tight", pad_inches=0.1, dpi=300)
-        plt.close()
-        buf.seek(0)
-        img = Image.open(buf)
-        return img
-    except Exception as e:
-        logger.error(f"Error al renderizar LaTeX a imagen: {e}")
-        return None
-
-
-class Classifier:
-    @staticmethod
-    def classify_problem(image_path):
-        latex_formula, problem_type = process_with_im2latex(cv2.imread(image_path))
-        return latex_formula, problem_type
-
-    @staticmethod
-    def process_pdf(pdf_path):
+    def process_pdf(self, pdf_path):
         """
-        Procesa un archivo PDF y extrae fórmulas matemáticas.
+        Procesa un archivo PDF y extrae fórmulas matemáticas con alta precisión.
         """
-        doc = fitz.open(pdf_path)
-        formulas = []
+        try:
+            logger.info(f"Iniciando procesamiento de PDF: {pdf_path}")
+            doc = fitz.open(pdf_path)
+            
+            # Verificar límites de páginas
+            if len(doc) > 50:
+                raise ValueError("El PDF excede el límite de 50 páginas")
+            if len(doc) < 1:
+                raise ValueError("El PDF debe tener al menos 1 página")
 
-        def process_page(page):
-            pix = page.get_pixmap()
-            img = Image.frombytes("RGB", [pix.width, pix.height], pix.samples)
-            img_path = f"temp/page_{page.number}.png"
-            img.save(img_path)
-            latex_formula, problem_type = Classifier.classify_problem(img_path)
-            os.remove(img_path)
-            return latex_formula, problem_type
+            # Configurar procesamiento paralelo
+            max_workers = min(os.cpu_count(), len(doc))
+            formulas_detectadas = []
+            processed_pages = 0
+            
+            with ThreadPoolExecutor(max_workers=max_workers) as executor:
+                # Procesar páginas en paralelo
+                future_to_page = {
+                    executor.submit(self._process_pdf_page, doc[page_num], page_num): page_num 
+                    for page_num in range(len(doc))
+                }
+                
+                # Recolectar resultados manteniendo el orden
+                for future in as_completed(future_to_page):
+                    page_num = future_to_page[future]
+                    try:
+                        page_formulas = future.result()
+                        if page_formulas:
+                            formulas_detectadas.extend(page_formulas)
+                        processed_pages += 1
+                        logger.info(f"Procesada página {page_num + 1}/{len(doc)}")
+                    except Exception as e:
+                        logger.error(f"Error en página {page_num + 1}: {e}")
 
-        with ThreadPoolExecutor(max_workers=os.cpu_count()) as executor:
-            future_to_page = {executor.submit(process_page, page): page for page in doc}
-            for future in as_completed(future_to_page):
-                latex_formula, problem_type = future.result()
-                if latex_formula:
-                    formulas.append({"formula": latex_formula, "tipo": problem_type})
+            # Filtrar y validar resultados
+            formulas_validadas = self._validate_formulas(formulas_detectadas)
+            
+            logger.info(f"Procesamiento de PDF completado. "
+                       f"Fórmulas encontradas: {len(formulas_validadas)}")
+            
+            return formulas_validadas
 
-        return formulas
+        except Exception as e:
+            logger.error(f"Error en procesamiento de PDF: {e}")
+            raise
+        finally:
+            if 'doc' in locals():
+                doc.close()
 
-    @staticmethod
-    def process_image(image_path):
+    def _process_pdf_page(self, page, page_num):
         """
-        Procesa una imagen y extrae fórmulas matemáticas.
+        Procesa una página individual del PDF.
         """
-        preprocessed = preprocess_image(cv2.imread(image_path))
-        cv2.imwrite("temp/preprocessed.png", preprocessed)
-        return Classifier.classify_problem("temp/preprocessed.png")
+        try:
+            # Extraer imágenes y texto de la página
+            formulas_en_pagina = []
+            
+            # Procesar imágenes en la página
+            image_list = page.get_images(full=True)
+            for img_index, img_info in enumerate(image_list):
+                try:
+                    xref = img_info[0]
+                    base_image = self._extract_image(page.parent, xref)
+                    if base_image:
+                        formula = self.process_image(base_image)
+                        if formula:
+                            formulas_en_pagina.append({
+                                'formula': formula,
+                                'tipo': self.latex_processor.classify_problem(formula),
+                                'pagina': page_num + 1,
+                                'confidence': self._calculate_confidence(formula),
+                                'origen': 'imagen'
+                            })
+                except Exception as e:
+                    logger.error(f"Error procesando imagen {img_index} en página {page_num + 1}: {e}")
 
+            # Procesar texto en la página
+            text_blocks = page.get_text("blocks")
+            for block in text_blocks:
+                try:
+                    text = block[4]
+                    if self._is_potential_formula(text):
+                        formula = self._extract_formula_from_text(text)
+                        if formula:
+                            formulas_en_pagina.append({
+                                'formula': formula,
+                                'tipo': self.latex_processor.classify_problem(formula),
+                                'pagina': page_num + 1,
+                                'confidence': self._calculate_confidence(formula),
+                                'origen': 'texto'
+                            })
+                except Exception as e:
+                    logger.error(f"Error procesando bloque de texto en página {page_num + 1}: {e}")
 
-# Diccionario local optimizado con las expresiones más comunes
-latex_equivalentes = {
-    "sqrt": "\\sqrt",
-    "^": "^{}",
-    "pi": "\\pi",
-    "inf": "\\infty",
-    "sum": "\\sum",
-    "int": "\\int",
-    "prod": "\\prod",
-    "sin": "\\sin",
-    "cos": "\\cos",
-    "tan": "\\tan",
-    "log": "\\log",
-    "ln": "\\ln",
-    "lim": "\\lim",
-    "alpha": "\\alpha",
-    "beta": "\\beta",
-    "gamma": "\\gamma",
-    "delta": "\\delta",
-    "epsilon": "\\epsilon",
-    "zeta": "\\zeta",
-    "eta": "\\eta",
-    "theta": "\\theta",
-    "iota": "\\iota",
-    "kappa": "\\kappa",
-    "lambda": "\\lambda",
-    "mu": "\\mu",
-    "nu": "\\nu",
-    "xi": "\\xi",
-    "pi": "\\pi",
-    "rho": "\\rho",
-    "sigma": "\\sigma",
-    "tau": "\\tau",
-    "upsilon": "\\upsilon",
-    "phi": "\\phi",
-    "chi": "\\chi",
-    "psi": "\\psi",
-    "omega": "\\omega",
-    "Gamma": "\\Gamma",
-    "Delta": "\\Delta",
-    "Theta": "\\Theta",
-    "Lambda": "\\Lambda",
-    "Xi": "\\Xi",
-    "Pi": "\\Pi",
-    "Sigma": "\\Sigma",
-    "Upsilon": "\\Upsilon",
-    "Phi": "\\Phi",
-    "Psi": "\\Psi",
-    "Omega": "\\Omega",
-    "in": "\\in",
-    "notin": "\\notin",
-    "subset": "\\subset",
-    "subseteq": "\\subseteq",
-    "cup": "\\cup",
-    "cap": "\\cap",
-    "setminus": "\\setminus",
-    "times": "\\times",
-    "div": "\\div",
-    "pm": "\\pm",
-    "mp": "\\mp",
-    "cdot": "\\cdot",
-    "ast": "\\ast",
-    "star": "\\star",
-    "circ": "\\circ",
-    "bigcirc": "\\bigcirc",
-    "oplus": "\\oplus",
-    "ominus": "\\ominus",
-    "otimes": "\\otimes",
-    "oslash": "\\oslash",
-    "odot": "\\odot",
-    "bigodot": "\\bigodot",
-    "bigoplus": "\\bigoplus",
-    "bigotimes": "\\bigotimes",
-    "bigoplus": "\\bigoplus",
-    "bigotimes": "\\bigotimes",
-    "leq": "\\leq",
-    "geq": "\\geq",
-    "neq": "\\neq",
-    "approx": "\\approx",
-    "propto": "\\propto",
-    "infty": "\\infty",
-    "wedge": "\\wedge",
-    "vee": "\\vee",
-    "oplus": "\\oplus",
-    "ominus": "\\ominus",
-    "otimes": "\\otimes",
-    "oslash": "\\oslash"
-}
+            return formulas_en_pagina
 
+        except Exception as e:
+            logger.error(f"Error procesando página {page_num + 1}: {e}")
+            return []
 
-@lru_cache(maxsize=1000)
-def buscar_en_api_externa(simbolo):
-    """
-    Busca un símbolo en una API externa si no está en el diccionario local.
+    def _extract_image(self, doc, xref):
+        """
+        Extrae y preprocesa una imagen del PDF.
+        """
+        try:
+            pix = fitz.Pixmap(doc, xref)
+            if pix.n - pix.alpha > 3:
+                pix = fitz.Pixmap(fitz.csRGB, pix)
+            
+            # Convertir a formato numpy
+            img_array = np.frombuffer(pix.samples, dtype=np.uint8)
+            img_array = img_array.reshape(pix.height, pix.width, -1)
+            
+            return img_array
+        except Exception as e:
+            logger.error(f"Error extrayendo imagen: {e}")
+            return None
 
-    Args:
-        simbolo (str): El símbolo a buscar.
+    def _is_potential_formula(self, text):
+        """
+        Determina si un bloque de texto podría contener una fórmula matemática.
+        """
+        math_indicators = [
+            r'\$', r'\[', r'\(', r'\\frac', r'\\sum', r'\\int',
+            r'\\alpha', r'\\beta', r'=', r'\+', r'-', r'\*', r'/',
+            r'^', r'_', r'\\sqrt', r'\\lim', r'\\infty'
+        ]
+        return any(indicator in text for indicator in math_indicators)
 
-    Returns:
-        str: El equivalente LaTeX del símbolo o el símbolo original si no se encuentra.
-    """
-    url = f"https://api.mathmlcloud.org/convert?input={simbolo}&format=latex"
-    try:
-        response = requests.get(url, timeout=5)
-        if response.status_code == 200:
-            return response.json().get("latex", simbolo)
-    except requests.RequestException as e:
-        logger.error(f"Error al buscar símbolo en API externa: {e}")
-    return simbolo
+    def _extract_formula_from_text(self, text):
+        """
+        Extrae y valida fórmulas matemáticas del texto.
+        """
+        try:
+            # Buscar patrones de fórmulas
+            formula_patterns = [
+                r'\$(.+?)\$',
+                r'\\\[(.+?)\\\]',
+                r'\\\((.+?)\\\)',
+            ]
+            
+            for pattern in formula_patterns:
+                matches = re.finditer(pattern, text)
+                for match in matches:
+                    formula = match.group(1)
+                    if self.latex_processor.is_valid_latex(formula):
+                        return self.latex_processor.clean_latex(formula)
+            return None
+        except Exception as e:
+            logger.error(f"Error extrayendo fórmula de texto: {e}")
+            return None
 
-def convertir_a_latex(input_text):
-    """
-    Convierte texto en su equivalente LaTeX.
+    def _calculate_confidence(self, formula):
+        """
+        Calcula el nivel de confianza de la fórmula detectada.
+        """
+        try:
+            # Factores que aumentan la confianza
+            confidence = 0.0
+            
+            # Complejidad de la fórmula
+            if len(formula) > 10:
+                confidence += 0.2
+            
+            # Presencia de símbolos matemáticos comunes
+            math_symbols = [r'\\frac', r'\\sum', r'\\int', r'\\sqrt']
+            for symbol in math_symbols:
+                if symbol in formula:
+                    confidence += 0.15
+            
+            # Estructura balanceada
+            if self._check_balanced_structure(formula):
+                confidence += 0.2
+            
+            # Validación sintáctica
+            if self.latex_processor.is_valid_latex(formula):
+                confidence += 0.3
+            
+            return min(confidence * 100, 100)  # Convertir a porcentaje
+        except Exception as e:
+            logger.error(f"Error calculando confianza: {e}")
+            return 0.0
 
-    Args:
-        input_text (str): El texto a convertir.
+    def _check_balanced_structure(self, formula):
+        """
+        Verifica que la estructura de la fórmula esté balanceada.
+        """
+        try:
+            stack = []
+            brackets = {'{': '}', '[': ']', '(': ')'}
+            
+            for char in formula:
+                if char in brackets:
+                    stack.append(char)
+                elif char in brackets.values():
+                    if not stack:
+                        return False
+                    if char != brackets[stack.pop()]:
+                        return False
+            
+            return len(stack) == 0
+        except Exception:
+            return False
 
-    Returns:
-        str: El texto convertido a formato LaTeX.
-    """
-    try:
-        # Asegúrate de que input_text sea una cadena
-        if not isinstance(input_text, str):
-            raise ValueError(f"El texto de entrada debe ser una cadena, no {type(input_text)}")
-
-        logger.info(f"Procesando texto: '{input_text}'")
-
-        # Eliminar espacios en blanco innecesarios
-        input_text = input_text.strip()
-
-        # Manejar paréntesis
-        input_text = input_text.replace("(", "\\left(").replace(")", "\\right)")
-
-        # Manejar potencias
-        input_text = re.sub(r'(\d+)\^(\d+)', r'\1^{\2}', input_text)
-
-        # Manejar operaciones básicas
-        operaciones = {
-            r"(\d+)\s*\+\s*(\d+)": r"\1 + \2",
-            r"(\d+)\s*-\s*(\d+)": r"\1 - \2",
-            r"(\d+)\s*\*\s*(\d+)": r"\1 \\times \2",
-            r"(\d+)\s*/\s*(\d+)": r"\\frac{\1}{\2}",
-        }
-
-        for patron, reemplazo in operaciones.items():
-            input_text = re.sub(patron, reemplazo, input_text)
-
-        # Manejar funciones matemáticas comunes
-        funciones = {
-            r"\bsqrt\b": r"\\sqrt",
-            r"\bsin\b": r"\\sin",
-            r"\bcos\b": r"\\cos",
-            r"\btan\b": r"\\tan",
-            r"\blog\b": r"\\log",
-            r"\bln\b": r"\\ln",
-            r"\bexp\b": r"\\exp",
-        }
-
-        for patron, reemplazo in funciones.items():
-            input_text = re.sub(patron, reemplazo, input_text)
-
-        logger.info(f"Texto convertido: '{input_text}'")
-        return input_text
-
-    except Exception as e:
-        logger.error(f"Error al procesar el texto '{input_text}': {str(e)}")
-        return f"Error: {str(e)}"
-
-def is_math_formula(text, confidence_threshold=0.7):
-    """
-    Determina si el texto es una fórmula matemática basándose en la presencia de elementos matemáticos.
-
-    Args:
-        text (str): El texto a analizar.
-        confidence_threshold (float): El umbral de confianza para considerar el texto como fórmula matemática.
-
-    Returns:
-        bool: True si el texto es considerado una fórmula matemática, False en caso contrario.
-    """
-    # Lista de palabras clave y símbolos matemáticos
-    math_keywords = [
-        "sin",
-        "cos",
-        "tan",
-        "log",
-        "ln",
-        "lim",
-        "int",
-        "sum",
-        "prod",
-        "frac",
-        "sqrt",
-    ]
-    math_symbols = [
-        "+",
-        "-",
-        "*",
-        "/",
-        "^",
-        "=",
-        "<",
-        ">",
-        "≤",
-        "≥",
-        "∫",
-        "∑",
-        "∏",
-        "√",
-        "∞",
-        "π",
-    ]
-
-    # Contar ocurrencias de palabras clave y símbolos
-    keyword_count = sum(1 for keyword in math_keywords if keyword in text.lower())
-    symbol_count = sum(1 for symbol in math_symbols if symbol in text)
-
-    # Calcular la confianza basada en la presencia de elementos matemáticos
-    total_elements = len(text.split())
-    math_elements = keyword_count + symbol_count
-    confidence = math_elements / total_elements if total_elements > 0 else 0
-
-    return confidence >= confidence_threshold
-
-def contains_math_content(image):
-    """
-    Detecta rápidamente si una imagen contiene contenido matemático.
-    """
-    try:
-        # Detectar características típicas de fórmulas matemáticas
-        edges = cv2.Canny(image, 100, 200)
-        contours, _ = cv2.findContours(edges, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+    def _validate_formulas(self, formulas):
+        """
+        Filtra y valida las fórmulas detectadas.
+        """
+        validated_formulas = []
+        seen_formulas = set()
         
-        # Analizar patrones de contornos
-        math_patterns = 0
-        for cnt in contours:
-            area = cv2.contourArea(cnt)
-            perimeter = cv2.arcLength(cnt, True)
-            if perimeter > 0:
-                circularity = 4 * np.pi * area / (perimeter * perimeter)
-                if 0.1 < circularity < 0.9:  # Típico para símbolos matemáticos
-                    math_patterns += 1
+        for formula_data in formulas:
+            formula = formula_data['formula']
+            confidence = formula_data['confidence']
+            
+            # Evitar duplicados
+            if formula in seen_formulas:
+                continue
+                
+            # Verificar confianza mínima
+            if confidence < 90:
+                continue
+                
+            # Validación adicional
+            if (self.latex_processor.is_valid_latex(formula) and 
+                self._check_balanced_structure(formula)):
+                validated_formulas.append(formula_data)
+                seen_formulas.add(formula)
+        
+        return validated_formulas
 
-        return math_patterns > 5  # Umbral ajustable
-
-    except Exception as e:
-        logger.error(f"Error al detectar contenido matemático: {e}")
-        return True  # En caso de error, permitir el procesamiento
-
-def is_valid_latex(text):
-    """
-    Verifica si el texto generado es una fórmula LaTeX válida.
-    """
-    # Patrones comunes en fórmulas matemáticas
-    math_patterns = [
-        r'\\[a-zA-Z]+{',  # Comandos LaTeX con llaves
-        r'\\[a-zA-Z]+\s',  # Comandos LaTeX con espacio
-        r'\$.*\$',         # Contenido entre $
-        r'[0-9]+',         # Números
-        r'[+\-*/=]',       # Operadores matemáticos
-        r'\\frac',         # Fracciones
-        r'\\sum',          # Sumas
-        r'\\int',          # Integrales
-    ]
-    
-    return any(re.search(pattern, text) for pattern in math_patterns)
-
-def main():
-    try:
-        logger.info("Módulo de inteligencia artificial iniciado.")
-        # Aquí puedes agregar más lógica de inicialización si es necesario
-    except Exception as e:
-        logger.error(f"Error al iniciar el módulo de IA: {str(e)}")
-
-
-if __name__ == "__main__":
-    main()
+# Inicialización del detector
+formula_detector = FormulaDetector()
 

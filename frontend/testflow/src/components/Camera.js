@@ -95,15 +95,21 @@ const CameraPage = () => {
           }
         );
 
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
-
         const data = await response.json();
-        console.log("Respuesta del servidor:", data);
+        
+        if (response.status === 404) {
+          // Caso específico para cuando no se detecta fórmula matemática
+          setError(data.message || "No se detectó ninguna fórmula matemática");
+        } else if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        } else {
+          console.log("Respuesta del servidor:", data);
+          // Limpiar el error si la operación fue exitosa
+          setError(null);
+        }
       } catch (err) {
-        console.error("Error al enviar frame:", err);
-        setError(`Error al enviar frame: ${err.message}`);
+        console.error("Error en la captura:", err);
+        setError(err.message);
       } finally {
         setLoading(false);
       }

@@ -34,7 +34,7 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-# Configuración de MongoDB con manejo de SSL
+# Configuración de MongoDB
 mongo_uri = os.getenv("MONGO_URI")
 if not mongo_uri:
     logger.error("MONGO_URI no está configurado en las variables de entorno")
@@ -43,10 +43,10 @@ if not mongo_uri:
 try:
     client = MongoClient(
         mongo_uri,
-        ssl=True,
-        ssl_cert_reqs='CERT_NONE',  # Esto es importante para evitar errores SSL
-        serverSelectionTimeoutMS=5000,  # Timeout más corto para la selección del servidor
-        connectTimeoutMS=10000,  # Timeout de conexión
+        tls=True,  # Usar tls en lugar de ssl
+        tlsAllowInvalidCertificates=True,  # Permitir certificados no válidos
+        serverSelectionTimeoutMS=5000,
+        connectTimeoutMS=10000,
         retryWrites=True,
         w='majority'
     )
@@ -59,9 +59,6 @@ try:
 except errors.ConnectionFailure as e:
     logger.error(f"No se pudo conectar a MongoDB: {e}")
     # En lugar de levantar una excepción, crear una colección en memoria
-    from pymongo.collection import Collection
-    from pymongo.database import Database
-    
     class MemoryCollection:
         def __init__(self):
             self.documents = []

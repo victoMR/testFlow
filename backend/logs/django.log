@@ -2256,3 +2256,87 @@ INFO 2024-10-29 13:34:50,650 model 28264 27036 Score matemático calculado: 0.692
 INFO 2024-10-29 13:34:50,650 model 28264 27036 Contenido matemático detectado con score: 0.6923076923076923
 INFO 2024-10-29 13:35:00,425 model 28264 27036 Fórmula LaTeX detectada: begin
 ERROR 2024-10-29 13:35:30,557 views 28264 9280 Error al procesar la imagen: SSL handshake failed: testflowclouster-shard-00-01.wxv1v.mongodb.net:27017: [('SSL routines', '', 'tlsv1 alert internal error')] (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms),SSL handshake failed: testflowclouster-shard-00-02.wxv1v.mongodb.net:27017: [('SSL routines', '', 'tlsv1 alert internal error')] (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms),SSL handshake failed: testflowclouster-shard-00-00.wxv1v.mongodb.net:27017: [('SSL routines', '', 'tlsv1 alert internal error')] (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms), Timeout: 30s, Topology Description: <TopologyDescription id: 672138d3719129d03960b5f3, topology_type: ReplicaSetNoPrimary, servers: [<ServerDescription ('testflowclouster-shard-00-00.wxv1v.mongodb.net', 27017) server_type: Unknown, rtt: None, error=AutoReconnect("SSL handshake failed: testflowclouster-shard-00-00.wxv1v.mongodb.net:27017: [('SSL routines', '', 'tlsv1 alert internal error')] (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)")>, <ServerDescription ('testflowclouster-shard-00-01.wxv1v.mongodb.net', 27017) server_type: Unknown, rtt: None, error=AutoReconnect("SSL handshake failed: testflowclouster-shard-00-01.wxv1v.mongodb.net:27017: [('SSL routines', '', 'tlsv1 alert internal error')] (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)")>, <ServerDescription ('testflowclouster-shard-00-02.wxv1v.mongodb.net', 27017) server_type: Unknown, rtt: None, error=AutoReconnect("SSL handshake failed: testflowclouster-shard-00-02.wxv1v.mongodb.net:27017: [('SSL routines', '', 'tlsv1 alert internal error')] (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)")>]>
+INFO 2024-10-31 02:28:33,344 views 22984 19584 Imagen decodificada correctamente. Iniciando procesamiento...
+INFO 2024-10-31 02:28:33,535 model 22984 30964 Score matemático calculado: 0.22878228782287824
+INFO 2024-10-31 02:28:33,535 model 22984 30964 No se detectó contenido matemático. Score: 0.22878228782287824
+INFO 2024-10-31 02:28:33,551 views 22984 19584 No se detectó fórmula matemática en la imagen
+INFO 2024-10-31 02:30:12,231 views 22984 19584 Imagen decodificada correctamente. Iniciando procesamiento...
+INFO 2024-10-31 02:30:12,626 model 22984 30964 Score matemático calculado: 0.0029477821448624366
+INFO 2024-10-31 02:30:12,628 model 22984 30964 No se detectó contenido matemático. Score: 0.0029477821448624366
+INFO 2024-10-31 02:30:12,629 views 22984 19584 No se detectó fórmula matemática en la imagen
+INFO 2024-10-31 02:32:02,969 views 4192 25100 Imagen decodificada correctamente. Iniciando procesamiento...
+INFO 2024-10-31 02:32:03,144 model 4192 3108 Score matemático calculado: 0.22878228782287824
+INFO 2024-10-31 02:32:03,144 model 4192 3108 No se detectó contenido matemático. Score: 0.22878228782287824
+INFO 2024-10-31 02:32:03,144 views 4192 25100 No se detectó fórmula matemática en la imagen
+INFO 2024-10-31 02:34:20,954 views 32736 22984 Imagen decodificada correctamente. Iniciando procesamiento...
+INFO 2024-10-31 02:34:21,100 model 32736 8944 Score matemático calculado: 0.22878228782287824
+INFO 2024-10-31 02:34:21,101 model 32736 8944 Contenido matemático detectado con score válido: 0.22878228782287824
+INFO 2024-10-31 02:34:37,096 model 32736 8944 Fórmula LaTeX detectada: begin
+INFO 2024-10-31 02:34:37,567 views 32736 22984 Procesamiento exitoso. Fórmula detectada: begin
+INFO 2024-10-31 02:36:32,597 views 28264 18736 Imagen decodificada correctamente. Iniciando procesamiento...
+INFO 2024-10-31 02:36:32,751 model 28264 7280 Score matemático calculado: 0.22878228782287824
+INFO 2024-10-31 02:36:32,751 model 28264 7280 Contenido matemático detectado con score válido: 0.22878228782287824
+WARNING 2024-10-31 02:37:24,171 model 28264 7280 Detección incompleta de fórmula
+INFO 2024-10-31 02:37:24,173 views 28264 18736 No se detectó fórmula matemática en la imagen
+INFO 2024-10-31 02:38:09,302 views 28264 18736 Imagen decodificada correctamente. Iniciando procesamiento...
+INFO 2024-10-31 02:38:09,622 model 28264 7280 Score matemático calculado: 0.04979253112033195
+INFO 2024-10-31 02:38:09,622 model 28264 7280 Score muy bajo para ser fórmula: 0.04979253112033195
+INFO 2024-10-31 02:38:09,622 model 28264 7280 No se detectó contenido matemático válido
+INFO 2024-10-31 02:38:09,630 views 28264 18736 No se detectó fórmula matemática en la imagen
+INFO 2024-10-31 02:39:11,475 views 30684 11816 Imagen decodificada correctamente. Iniciando procesamiento...
+INFO 2024-10-31 02:39:11,765 model 30684 15856 Score matemático calculado: 0.04979253112033195
+INFO 2024-10-31 02:39:11,765 model 30684 15856 Contenido matemático detectado con score válido: 0.04979253112033195
+WARNING 2024-10-31 02:39:32,593 model 30684 15856 Detección incompleta de fórmula
+INFO 2024-10-31 02:39:32,608 views 30684 11816 No se detectó fórmula matemática en la imagen
+INFO 2024-10-31 02:43:57,546 views 28172 27748 Imagen decodificada correctamente. Iniciando procesamiento...
+INFO 2024-10-31 02:43:57,721 model 28172 23304 Imagen de debug guardada: C:\Users\raton\OneDrive\Documentos\univ vks\7to Cuatri\ArqSoftware\testFlow\backend\ai\temp\debug_original_20241031-024357.png
+INFO 2024-10-31 02:43:57,757 model 28172 23304 Imagen de debug guardada: C:\Users\raton\OneDrive\Documentos\univ vks\7to Cuatri\ArqSoftware\testFlow\backend\ai\temp\debug_gray_20241031-024357.png
+INFO 2024-10-31 02:43:57,773 model 28172 23304 Imagen de debug guardada: C:\Users\raton\OneDrive\Documentos\univ vks\7to Cuatri\ArqSoftware\testFlow\backend\ai\temp\debug_enhanced_20241031-024357.png
+INFO 2024-10-31 02:43:58,048 model 28172 23304 Imagen de debug guardada: C:\Users\raton\OneDrive\Documentos\univ vks\7to Cuatri\ArqSoftware\testFlow\backend\ai\temp\debug_denoised_20241031-024358.png
+INFO 2024-10-31 02:43:58,062 model 28172 23304 Imagen de debug guardada: C:\Users\raton\OneDrive\Documentos\univ vks\7to Cuatri\ArqSoftware\testFlow\backend\ai\temp\debug_binary_20241031-024358.png
+INFO 2024-10-31 02:43:58,070 model 28172 23304 Imagen de debug guardada: C:\Users\raton\OneDrive\Documentos\univ vks\7to Cuatri\ArqSoftware\testFlow\backend\ai\temp\debug_morph_20241031-024358.png
+INFO 2024-10-31 02:43:58,075 model 28172 23304 Imagen de debug guardada: C:\Users\raton\OneDrive\Documentos\univ vks\7to Cuatri\ArqSoftware\testFlow\backend\ai\temp\debug_edges_20241031-024358.png
+INFO 2024-10-31 02:43:58,080 model 28172 23304 Imagen de debug guardada: C:\Users\raton\OneDrive\Documentos\univ vks\7to Cuatri\ArqSoftware\testFlow\backend\ai\temp\debug_dilated_20241031-024358.png
+INFO 2024-10-31 02:43:58,088 model 28172 23304 Score matemático calculado: 0.030226700251889168
+INFO 2024-10-31 02:43:58,088 model 28172 23304 Contenido matemático detectado con score válido: 0.030226700251889168
+WARNING 2024-10-31 02:44:17,215 model 28172 23304 Detección incompleta de fórmula
+INFO 2024-10-31 02:44:17,215 views 28172 27748 No se detectó fórmula matemática en la imagen
+INFO 2024-10-31 02:47:18,087 views 16584 14460 Imagen decodificada correctamente. Iniciando procesamiento...
+INFO 2024-10-31 02:47:18,094 model 16584 27580 Imagen de debug guardada: C:\Users\raton\OneDrive\Documentos\univ vks\7to Cuatri\ArqSoftware\testFlow\backend\ai\temp\debug_original_20241031-024718.png
+INFO 2024-10-31 02:47:18,141 model 16584 27580 Imagen de debug guardada: C:\Users\raton\OneDrive\Documentos\univ vks\7to Cuatri\ArqSoftware\testFlow\backend\ai\temp\debug_resized_20241031-024718.png
+INFO 2024-10-31 02:47:18,155 model 16584 27580 Imagen de debug guardada: C:\Users\raton\OneDrive\Documentos\univ vks\7to Cuatri\ArqSoftware\testFlow\backend\ai\temp\debug_gray_20241031-024718.png
+INFO 2024-10-31 02:47:18,169 model 16584 27580 Imagen de debug guardada: C:\Users\raton\OneDrive\Documentos\univ vks\7to Cuatri\ArqSoftware\testFlow\backend\ai\temp\debug_enhanced_20241031-024718.png
+INFO 2024-10-31 02:47:18,463 model 16584 27580 Imagen de debug guardada: C:\Users\raton\OneDrive\Documentos\univ vks\7to Cuatri\ArqSoftware\testFlow\backend\ai\temp\debug_denoised_20241031-024718.png
+INFO 2024-10-31 02:47:18,486 model 16584 27580 Imagen de debug guardada: C:\Users\raton\OneDrive\Documentos\univ vks\7to Cuatri\ArqSoftware\testFlow\backend\ai\temp\debug_binary_20241031-024718.png
+INFO 2024-10-31 02:47:18,498 model 16584 27580 Imagen de debug guardada: C:\Users\raton\OneDrive\Documentos\univ vks\7to Cuatri\ArqSoftware\testFlow\backend\ai\temp\debug_morph_20241031-024718.png
+INFO 2024-10-31 02:47:18,503 model 16584 27580 Imagen de debug guardada: C:\Users\raton\OneDrive\Documentos\univ vks\7to Cuatri\ArqSoftware\testFlow\backend\ai\temp\debug_edges_20241031-024718.png
+INFO 2024-10-31 02:47:18,510 model 16584 27580 Imagen de debug guardada: C:\Users\raton\OneDrive\Documentos\univ vks\7to Cuatri\ArqSoftware\testFlow\backend\ai\temp\debug_dilated_20241031-024718.png
+INFO 2024-10-31 02:47:18,516 model 16584 27580 Imagen de debug guardada: C:\Users\raton\OneDrive\Documentos\univ vks\7to Cuatri\ArqSoftware\testFlow\backend\ai\temp\debug_final_20241031-024718.png
+ERROR 2024-10-31 02:47:18,525 model 16584 27580 Error al calcular score matemático: 'FormulaDetector' object has no attribute '_check_symbol_features'
+INFO 2024-10-31 02:47:18,525 model 16584 27580 Score muy bajo para ser fórmula: 0.0
+INFO 2024-10-31 02:47:18,525 model 16584 27580 No se detectó contenido matemático válido
+INFO 2024-10-31 02:47:18,527 views 16584 14460 No se detectó fórmula matemática en la imagen
+INFO 2024-10-31 02:53:25,451 views 31828 32528 Imagen decodificada correctamente. Iniciando procesamiento...
+INFO 2024-10-31 02:53:25,451 model 31828 32516 Directorio temporal limpiado
+INFO 2024-10-31 02:53:25,508 model 31828 32516 Imagen de debug guardada: C:\Users\raton\OneDrive\Documentos\univ vks\7to Cuatri\ArqSoftware\testFlow\backend\ai\temp\debug_1_initial_20241031-025325.png
+INFO 2024-10-31 02:53:25,675 model 31828 32516 Imagen de debug guardada: C:\Users\raton\OneDrive\Documentos\univ vks\7to Cuatri\ArqSoftware\testFlow\backend\ai\temp\debug_2_contrast_20241031-025325.png
+INFO 2024-10-31 02:53:25,780 model 31828 32516 Imagen de debug guardada: C:\Users\raton\OneDrive\Documentos\univ vks\7to Cuatri\ArqSoftware\testFlow\backend\ai\temp\debug_3_denoised_20241031-025325.png
+INFO 2024-10-31 02:53:25,871 model 31828 32516 Imagen de debug guardada: C:\Users\raton\OneDrive\Documentos\univ vks\7to Cuatri\ArqSoftware\testFlow\backend\ai\temp\debug_4_edges_20241031-025325.png
+INFO 2024-10-31 02:53:25,892 model 31828 32516 Imagen de debug guardada: C:\Users\raton\OneDrive\Documentos\univ vks\7to Cuatri\ArqSoftware\testFlow\backend\ai\temp\debug_5_threshold_20241031-025325.png
+INFO 2024-10-31 02:53:25,898 model 31828 32516 Imagen de debug guardada: C:\Users\raton\OneDrive\Documentos\univ vks\7to Cuatri\ArqSoftware\testFlow\backend\ai\temp\debug_6_morph_20241031-025325.png
+INFO 2024-10-31 02:53:25,905 model 31828 32516 Imagen de debug guardada: C:\Users\raton\OneDrive\Documentos\univ vks\7to Cuatri\ArqSoftware\testFlow\backend\ai\temp\debug_7_final_20241031-025325.png
+ERROR 2024-10-31 02:53:25,935 model 31828 32516 Error al calcular score matemático: 'FormulaDetector' object has no attribute '_save_debug_image'
+INFO 2024-10-31 02:53:25,936 model 31828 32516 Score muy bajo para ser fórmula: 0.0
+INFO 2024-10-31 02:53:25,936 model 31828 32516 No se detectó contenido matemático válido
+INFO 2024-10-31 02:53:25,938 views 31828 32528 No se detectó fórmula matemática en la imagen
+INFO 2024-10-31 02:58:50,911 views 22984 2360 Imagen decodificada correctamente. Iniciando procesamiento...
+INFO 2024-10-31 02:58:50,913 model 22984 2200 Directorio temporal limpiado
+INFO 2024-10-31 02:58:50,949 model 22984 2200 Imagen de debug guardada: C:\Users\raton\OneDrive\Documentos\univ vks\7to Cuatri\ArqSoftware\testFlow\backend\ai\temp\debug_1_initial_20241031-025850.png
+INFO 2024-10-31 02:58:51,084 model 22984 2200 Imagen de debug guardada: C:\Users\raton\OneDrive\Documentos\univ vks\7to Cuatri\ArqSoftware\testFlow\backend\ai\temp\debug_2_contrast_20241031-025851.png
+INFO 2024-10-31 02:58:51,160 model 22984 2200 Imagen de debug guardada: C:\Users\raton\OneDrive\Documentos\univ vks\7to Cuatri\ArqSoftware\testFlow\backend\ai\temp\debug_3_denoised_20241031-025851.png
+INFO 2024-10-31 02:58:51,212 model 22984 2200 Imagen de debug guardada: C:\Users\raton\OneDrive\Documentos\univ vks\7to Cuatri\ArqSoftware\testFlow\backend\ai\temp\debug_4_edges_20241031-025851.png
+INFO 2024-10-31 02:58:51,224 model 22984 2200 Imagen de debug guardada: C:\Users\raton\OneDrive\Documentos\univ vks\7to Cuatri\ArqSoftware\testFlow\backend\ai\temp\debug_5_threshold_20241031-025851.png
+INFO 2024-10-31 02:58:51,228 model 22984 2200 Imagen de debug guardada: C:\Users\raton\OneDrive\Documentos\univ vks\7to Cuatri\ArqSoftware\testFlow\backend\ai\temp\debug_6_morph_20241031-025851.png
+INFO 2024-10-31 02:58:51,241 model 22984 2200 Imagen de debug guardada: C:\Users\raton\OneDrive\Documentos\univ vks\7to Cuatri\ArqSoftware\testFlow\backend\ai\temp\debug_7_final_20241031-025851.png
+ERROR 2024-10-31 02:58:51,248 model 22984 2200 Error en procesamiento de imagen: 'FormulaDetector' object has no attribute '_detect_formula_regions'
+INFO 2024-10-31 02:58:51,250 views 22984 2360 No se detectó fórmula matemática en la imagen

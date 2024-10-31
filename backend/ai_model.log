@@ -600,3 +600,41 @@
 2024-10-29 13:42:29,133 - ai.views - ERROR - No se pudo conectar a MongoDB: SSL handshake failed: testflowclouster-shard-00-02.wxv1v.mongodb.net:27017: [('SSL routines', '', 'tlsv1 alert internal error')] (configured timeouts: socketTimeoutMS: 10000.0ms, connectTimeoutMS: 10000.0ms),SSL handshake failed: testflowclouster-shard-00-00.wxv1v.mongodb.net:27017: [('SSL routines', '', 'tlsv1 alert internal error')] (configured timeouts: socketTimeoutMS: 10000.0ms, connectTimeoutMS: 10000.0ms),SSL handshake failed: testflowclouster-shard-00-01.wxv1v.mongodb.net:27017: [('SSL routines', '', 'tlsv1 alert internal error')] (configured timeouts: socketTimeoutMS: 10000.0ms, connectTimeoutMS: 10000.0ms), Timeout: 5.0s, Topology Description: <TopologyDescription id: 67213a9fd24703cf881f9c04, topology_type: ReplicaSetNoPrimary, servers: [<ServerDescription ('testflowclouster-shard-00-00.wxv1v.mongodb.net', 27017) server_type: Unknown, rtt: None, error=AutoReconnect("SSL handshake failed: testflowclouster-shard-00-00.wxv1v.mongodb.net:27017: [('SSL routines', '', 'tlsv1 alert internal error')] (configured timeouts: socketTimeoutMS: 10000.0ms, connectTimeoutMS: 10000.0ms)")>, <ServerDescription ('testflowclouster-shard-00-01.wxv1v.mongodb.net', 27017) server_type: Unknown, rtt: None, error=AutoReconnect("SSL handshake failed: testflowclouster-shard-00-01.wxv1v.mongodb.net:27017: [('SSL routines', '', 'tlsv1 alert internal error')] (configured timeouts: socketTimeoutMS: 10000.0ms, connectTimeoutMS: 10000.0ms)")>, <ServerDescription ('testflowclouster-shard-00-02.wxv1v.mongodb.net', 27017) server_type: Unknown, rtt: None, error=AutoReconnect("SSL handshake failed: testflowclouster-shard-00-02.wxv1v.mongodb.net:27017: [('SSL routines', '', 'tlsv1 alert internal error')] (configured timeouts: socketTimeoutMS: 10000.0ms, connectTimeoutMS: 10000.0ms)")>]>
 2024-10-29 13:42:29,134 - ai.views - WARNING - Usando almacenamiento en memoria como fallback
 2024-10-29 13:42:29,134 - ai.views - INFO - Conexión exitosa a Redis en redis-11043.c274.us-east-1-3.ec2.redns.redis-cloud.com:11043/0
+2024-10-31 02:27:07,201 - ai.model - INFO - Cargando modelo de visión...
+2024-10-31 02:27:13,885 - ai.model - INFO - Modelo cargado exitosamente
+2024-10-31 02:27:15,043 - ai.views - INFO - Conexión exitosa a MongoDB
+2024-10-31 02:27:15,043 - ai.views - INFO - Conexión exitosa a Redis en redis-11043.c274.us-east-1-3.ec2.redns.redis-cloud.com:11043/0
+2024-10-31 02:31:42,721 - ai.model - INFO - Cargando modelo de visión...
+2024-10-31 02:31:50,592 - ai.model - INFO - Modelo cargado exitosamente
+2024-10-31 02:31:51,708 - ai.views - INFO - Conexión exitosa a MongoDB
+2024-10-31 02:31:51,708 - ai.views - INFO - Conexión exitosa a Redis en redis-11043.c274.us-east-1-3.ec2.redns.redis-cloud.com:11043/0
+2024-10-31 02:34:10,160 - ai.model - INFO - Cargando modelo de visión...
+2024-10-31 02:34:17,710 - ai.model - INFO - Modelo cargado exitosamente
+2024-10-31 02:34:18,847 - ai.views - INFO - Conexión exitosa a MongoDB
+2024-10-31 02:34:18,848 - ai.views - INFO - Conexión exitosa a Redis en redis-11043.c274.us-east-1-3.ec2.redns.redis-cloud.com:11043/0
+2024-10-31 02:36:17,403 - ai.model - INFO - Cargando modelo de visión...
+2024-10-31 02:36:24,851 - ai.model - INFO - Modelo cargado exitosamente
+2024-10-31 02:36:25,897 - ai.views - INFO - Conexión exitosa a MongoDB
+2024-10-31 02:36:25,897 - ai.views - INFO - Conexión exitosa a Redis en redis-11043.c274.us-east-1-3.ec2.redns.redis-cloud.com:11043/0
+2024-10-31 02:38:58,223 - ai.model - INFO - Cargando modelo de visión...
+2024-10-31 02:39:06,242 - ai.model - INFO - Modelo cargado exitosamente
+2024-10-31 02:39:07,381 - ai.views - INFO - Conexión exitosa a MongoDB
+2024-10-31 02:39:07,382 - ai.views - INFO - Conexión exitosa a Redis en redis-11043.c274.us-east-1-3.ec2.redns.redis-cloud.com:11043/0
+2024-10-31 02:43:39,806 - ai.model - INFO - Cargando modelo de visión...
+2024-10-31 02:43:47,307 - ai.model - INFO - Modelo cargado exitosamente
+2024-10-31 02:43:48,458 - ai.views - INFO - Conexión exitosa a MongoDB
+2024-10-31 02:43:48,458 - ai.views - INFO - Conexión exitosa a Redis en redis-11043.c274.us-east-1-3.ec2.redns.redis-cloud.com:11043/0
+2024-10-31 02:46:22,508 - ai.model - INFO - Cargando modelo de visión...
+2024-10-31 02:46:29,217 - ai.model - INFO - Modelo cargado exitosamente
+2024-10-31 02:46:30,382 - ai.views - INFO - Conexión exitosa a MongoDB
+2024-10-31 02:46:30,382 - ai.views - INFO - Conexión exitosa a Redis en redis-11043.c274.us-east-1-3.ec2.redns.redis-cloud.com:11043/0
+2024-10-31 02:53:12,309 - ai.model - INFO - Cargando modelo de visión...
+2024-10-31 02:53:20,601 - ai.model - INFO - Modelo cargado exitosamente
+2024-10-31 02:53:20,601 - ai.model - INFO - Directorio temporal limpiado
+2024-10-31 02:53:21,732 - ai.views - INFO - Conexión exitosa a MongoDB
+2024-10-31 02:53:21,733 - ai.views - INFO - Conexión exitosa a Redis en redis-11043.c274.us-east-1-3.ec2.redns.redis-cloud.com:11043/0
+2024-10-31 02:58:35,593 - ai.model - INFO - Cargando modelo de visión...
+2024-10-31 02:58:41,758 - ai.model - INFO - Modelo cargado exitosamente
+2024-10-31 02:58:41,804 - ai.model - INFO - Directorio temporal limpiado
+2024-10-31 02:58:42,920 - ai.views - INFO - Conexión exitosa a MongoDB
+2024-10-31 02:58:42,920 - ai.views - INFO - Conexión exitosa a Redis en redis-11043.c274.us-east-1-3.ec2.redns.redis-cloud.com:11043/0

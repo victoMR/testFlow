@@ -26,6 +26,7 @@ import fitz  # PyMuPDF para procesamiento de PDFs
 from concurrent.futures import ThreadPoolExecutor, as_completed
 import threading
 from tqdm import tqdm
+import glob
 
 # Configuración inicial
 load_dotenv()
@@ -96,106 +97,318 @@ class ModelManager:
         self.model.to(device)
         if device.type == 'cuda':
             self.model.half()
+        # Cache para resultados
+        self.formula_cache = {}
             
     @staticmethod
     @lru_cache(maxsize=1)
     def _load_model():
         logger.info("Cargando modelo de visión...")
         try:
+            # Usar modelo más preciso para fórmulas matemáticas
             model = VisionEncoderDecoderModel.from_pretrained(
-                "DGurgurov/im2latex", 
+                "DGurgurov/im2latex",
                 cache_dir=model_dir,
-                trust_remote_code=True
+                trust_remote_code=True,
+                revision="main",
+                use_auth_token=False
             )
+            
+            # Configurar el tokenizer para mejor manejo de fórmulas
             tokenizer = AutoTokenizer.from_pretrained(
                 "DGurgurov/im2latex",
                 cache_dir=model_dir,
                 pad_token="<pad>",
-                eos_token="</s>"
+                eos_token="</s>",
+                use_fast=True,
+                model_max_length=512
             )
+            
+            # Mejorar el procesamiento de imágenes
             feature_extractor = ViTImageProcessor.from_pretrained(
                 "microsoft/swin-base-patch4-window7-224-in22k",
-                cache_dir=model_dir
+                cache_dir=model_dir,
+                do_resize=True,
+                size={"height": 224, "width": 224},
+                do_normalize=True
             )
+            
             logger.info("Modelo cargado exitosamente")
             return model, tokenizer, feature_extractor
         except Exception as e:
             logger.error(f"Error al cargar el modelo: {e}")
             raise
 
+    def process_formula(self, image, region=None):
+        """Procesa una región específica o la imagen completa para extraer fórmulas."""
+        try:
+            # Si se proporciona una región, recortar la imagen
+            if region is not None:
+                x, y, w, h = region
+                image = image[y:y+h, x:x+w]
+
+            # Preprocesar imagen para el modelo
+            image_tensor = self._prepare_image(image)
+            
+            # Generar predicción
+            with torch.no_grad():
+                outputs = self.model.generate(
+                    image_tensor,
+                    max_length=512,
+                    num_beams=5,           # Aumentado para mejor búsqueda
+                    length_penalty=1.0,
+                    early_stopping=True,
+                    no_repeat_ngram_size=2,
+                    temperature=0.7,
+                    top_k=50,
+                    top_p=0.95,
+                    return_dict_in_generate=True,
+                    output_scores=True
+                )
+
+            # Decodificar y obtener scores
+            predicted_latex = self.tokenizer.batch_decode(outputs.sequences, skip_special_tokens=True)
+            confidence_scores = self._calculate_confidence(outputs)
+
+            # Filtrar y limpiar resultados
+            valid_formulas = []
+            for latex, score in zip(predicted_latex, confidence_scores):
+                if score > 0.5:  # Umbral de confianza
+                    cleaned_latex = self._clean_formula(latex)
+                    if cleaned_latex:
+                        valid_formulas.append({
+                            'latex': cleaned_latex,
+                            'confidence': score
+                        })
+
+            return valid_formulas
+
+        except Exception as e:
+            logger.error(f"Error en procesamiento de fórmula: {e}")
+            return []
+
+    def _prepare_image(self, image):
+        """Prepara la imagen para el modelo."""
+        try:
+            # Convertir a RGB si es necesario
+            if len(image.shape) == 2:
+                image = cv2.cvtColor(image, cv2.COLOR_GRAY2RGB)
+            elif image.shape[2] == 4:
+                image = cv2.cvtColor(image, cv2.COLOR_BGRA2RGB)
+            elif image.shape[2] == 3:
+                image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+
+            # Convertir a PIL
+            pil_image = Image.fromarray(image)
+
+            # Procesar con el feature extractor
+            inputs = self.feature_extractor(
+                images=pil_image,
+                return_tensors="pt"
+            )
+
+            return inputs.pixel_values.to(device)
+
+        except Exception as e:
+            logger.error(f"Error en preparación de imagen: {e}")
+            raise
+
+    def _calculate_confidence(self, outputs):
+        """Calcula scores de confianza para las predicciones."""
+        try:
+            # Calcular probabilidades promedio
+            scores = []
+            for seq_scores in outputs.scores:
+                probs = torch.nn.functional.softmax(seq_scores, dim=-1)
+                max_probs = torch.max(probs, dim=-1).values
+                avg_prob = torch.mean(max_probs).item()
+                scores.append(avg_prob)
+            return scores
+        except Exception as e:
+            logger.error(f"Error calculando confianza: {e}")
+            return [0.0]
+
+    def _clean_formula(self, latex):
+        """Limpia y valida la fórmula LaTeX."""
+        try:
+            # Eliminar espacios extras
+            latex = re.sub(r'\s+', ' ', latex.strip())
+            
+            # Verificar balance de símbolos
+            if not self._check_symbol_balance(latex):
+                return None
+                
+            # Verificar longitud mínima
+            if len(latex) < 3:
+                return None
+                
+            # Verificar contenido matemático básico
+            if not re.search(r'[+\-*/=\\\{\}\[\]\(\)]', latex):
+                return None
+                
+            return latex
+            
+        except Exception:
+            return None
+
+    def _check_symbol_balance(self, latex):
+        """Verifica el balance de símbolos en la fórmula."""
+        stack = []
+        pairs = {'{': '}', '[': ']', '(': ')'}
+        
+        for char in latex:
+            if char in pairs:
+                stack.append(char)
+            elif char in pairs.values():
+                if not stack:
+                    return False
+                if char != pairs[stack.pop()]:
+                    return False
+                    
+        return len(stack) == 0
+
 class ImageProcessor:
     """Procesa imágenes para detección de fórmulas matemáticas."""
     
     def __init__(self):
-        # Cache para resultados de procesamiento
         self.last_frame = None
         self.last_result = None
-        self.frame_skip = 2  # Procesar cada N frames
+        self.frame_skip = 2
         self.frame_count = 0
+        self.temp_dir = os.path.join(os.path.dirname(__file__), 'temp')
+        os.makedirs(self.temp_dir, exist_ok=True)
+        self._clean_temp_dir()  # Limpiar al inicio
         
-    def preprocess(self, image):
-        """Preprocesa la imagen para mejorar la detección."""
+    def _clean_temp_dir(self):
+        """Limpia completamente el directorio temporal."""
         try:
+            files = glob.glob(os.path.join(self.temp_dir, '*'))
+            for f in files:
+                os.remove(f)
+            logger.info("Directorio temporal limpiado")
+        except Exception as e:
+            logger.error(f"Error limpiando directorio temporal: {e}")
+
+    def _save_debug_image(self, image, stage):
+        """Guarda imagen de debug en el directorio temporal."""
+        try:
+            timestamp = time.strftime("%Y%m%d-%H%M%S")
+            filename = os.path.join(self.temp_dir, f"debug_{stage}_{timestamp}.png")
+            cv2.imwrite(filename, image)
+            logger.info(f"Imagen de debug guardada: {filename}")
+        except Exception as e:
+            logger.error(f"Error guardando imagen de debug: {e}")
+
+    def preprocess(self, image):
+        """Preprocesamiento mejorado para extracción de fórmulas."""
+        try:
+            self._clean_temp_dir()  # Limpiar antes de empezar
+            
             if not isinstance(image, np.ndarray):
                 return None
-            
-            # Redimensionar imagen para procesamiento más rápido
+
+            # 1. Preprocesamiento inicial
             height, width = image.shape[:2]
-            max_dimension = 800
-            if max(height, width) > max_dimension:
-                scale = max_dimension / max(height, width)
-                image = cv2.resize(image, None, fx=scale, fy=scale)
-            
-            # Convertir a escala de grises y mejorar contraste
-            gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY) if len(image.shape) == 3 else image
-            
-            # Aplicar umbralización adaptativa
-            binary = cv2.adaptiveThreshold(
-                gray, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, 
-                cv2.THRESH_BINARY, 11, 2
+            # Mantener aspecto pero asegurar tamaño mínimo
+            min_dim = 1000
+            scale = max(min_dim / min(height, width), 1.0)
+            new_size = (int(width * scale), int(height * scale))
+            image = cv2.resize(image, new_size, interpolation=cv2.INTER_CUBIC)
+            self._save_debug_image(image, "1_initial")
+
+            # 2. Mejora de contraste adaptativo
+            if len(image.shape) == 3:
+                lab = cv2.cvtColor(image, cv2.COLOR_BGR2LAB)
+                l, a, b = cv2.split(lab)
+                clahe = cv2.createCLAHE(clipLimit=2.0, tileGridSize=(8,8))
+                l = clahe.apply(l)
+                lab = cv2.merge((l, a, b))
+                image = cv2.cvtColor(lab, cv2.COLOR_LAB2BGR)
+                gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+            else:
+                gray = image
+            self._save_debug_image(gray, "2_contrast")
+
+            # 3. Reducción de ruido bilateral
+            denoised = cv2.bilateralFilter(gray, 9, 75, 75)
+            self._save_debug_image(denoised, "3_denoised")
+
+            # 4. Detección de bordes múltiple
+            edges_canny = cv2.Canny(denoised, 50, 150)
+            gradient_x = cv2.Sobel(denoised, cv2.CV_64F, 1, 0, ksize=3)
+            gradient_y = cv2.Sobel(denoised, cv2.CV_64F, 0, 1, ksize=3)
+            gradient_mag = np.sqrt(gradient_x**2 + gradient_y**2)
+            gradient_mag = cv2.normalize(gradient_mag, None, 0, 255, cv2.NORM_MINMAX).astype(np.uint8)
+            edges_combined = cv2.addWeighted(edges_canny, 0.7, gradient_mag, 0.3, 0)
+            self._save_debug_image(edges_combined, "4_edges")
+
+            # 5. Umbralización adaptativa
+            thresh = cv2.adaptiveThreshold(
+                denoised,
+                255,
+                cv2.ADAPTIVE_THRESH_GAUSSIAN_C,
+                cv2.THRESH_BINARY_INV,
+                21,
+                10
             )
+            self._save_debug_image(thresh, "5_threshold")
+
+            # 6. Operaciones morfológicas
+            kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (3,3))
+            morph = cv2.morphologyEx(thresh, cv2.MORPH_CLOSE, kernel)
+            morph = cv2.morphologyEx(morph, cv2.MORPH_OPEN, kernel)
+            self._save_debug_image(morph, "6_morph")
+
+            # 7. Encontrar y filtrar contornos
+            contours, _ = cv2.findContours(morph, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+            mask = np.zeros_like(morph)
+            for cnt in contours:
+                area = cv2.contourArea(cnt)
+                if area > 100:  # Filtrar contornos pequeños
+                    cv2.drawContours(mask, [cnt], -1, (255,255,255), -1)
             
-            # Eliminar ruido manteniendo detalles importantes
-            denoised = cv2.fastNlMeansDenoising(binary, None, 10, 7, 21)
-            
-            return denoised
-            
+            # 8. Resultado final
+            result = cv2.bitwise_and(morph, mask)
+            self._save_debug_image(result, "7_final")
+
+            return result
+
         except Exception as e:
             logger.error(f"Error en preprocesamiento: {e}")
+            self._clean_temp_dir()  # Limpiar en caso de error
             return None
 
     def contains_math(self, image):
-        """Detecta si la imagen contiene contenido matemático de manera eficiente."""
+        """Detecta si la imagen contiene contenido matemático."""
         try:
-            # Verificar si es similar al último frame procesado
+            # Verificar similitud con último frame
             if self.last_frame is not None:
                 diff = cv2.absdiff(image, self.last_frame)
-                if np.mean(diff) < 5.0:  # Umbral de diferencia
+                if np.mean(diff) < 5.0:
                     return self.last_result
 
-            # Detectar características específicas de fórmulas matemáticas
-            edges = cv2.Canny(image, 100, 200)
+            # Detectar características
+            edges = cv2.Canny(image, 50, 150)
             contours, _ = cv2.findContours(edges, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
             
-            # Análisis rápido de patrones matemáticos
+            # Análisis de patrones
             math_indicators = 0
             total_area = image.shape[0] * image.shape[1]
             
             for cnt in contours:
                 area = cv2.contourArea(cnt)
-                if area < total_area * 0.0001:  # Ignorar contornos muy pequeños
+                if area < total_area * 0.0001:
                     continue
                     
                 x, y, w, h = cv2.boundingRect(cnt)
                 aspect_ratio = float(w)/h if h > 0 else 0
                 
-                # Características típicas de símbolos matemáticos
-                if 0.2 < aspect_ratio < 5:
+                if 0.1 < aspect_ratio < 10:
                     roi = image[y:y+h, x:x+w]
                     if self._check_symbol_features(roi):
                         math_indicators += 1
                         
-                if math_indicators >= 3:  # Umbral mínimo de indicadores
+                if math_indicators >= 2:
                     self.last_frame = image.copy()
                     self.last_result = True
                     return True
@@ -209,25 +422,55 @@ class ImageProcessor:
             return False
 
     def _check_symbol_features(self, roi):
-        """Verifica características específicas de símbolos matemáticos."""
+        """Verificación mejorada de características matemáticas."""
         try:
-            # Calcular histograma de gradientes
-            gx = cv2.Sobel(roi, cv2.CV_32F, 1, 0)
-            gy = cv2.Sobel(roi, cv2.CV_32F, 0, 1)
+            # Normalizar y preparar ROI
+            roi = cv2.resize(roi, (64, 64))
+            
+            # 1. Análisis de gradientes
+            gx = cv2.Sobel(roi, cv2.CV_32F, 1, 0, ksize=3)
+            gy = cv2.Sobel(roi, cv2.CV_32F, 0, 1, ksize=3)
             mag, ang = cv2.cartToPolar(gx, gy)
             
-            # Verificar distribución de gradientes típica de símbolos matemáticos
-            hist = np.histogram(ang, bins=8)[0]
-            hist = hist / np.sum(hist)
+            # 2. Características geométricas
+            contours, _ = cv2.findContours(roi, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+            if not contours:
+                return False
+                
+            # Análisis del contorno principal
+            cnt = max(contours, key=cv2.contourArea)
+            area = cv2.contourArea(cnt)
+            perimeter = cv2.arcLength(cnt, True)
+            if perimeter == 0:
+                return False
             
-            # Patrones típicos de símbolos matemáticos
-            vertical_lines = hist[0] + hist[4]  # 0° y 180°
-            horizontal_lines = hist[2] + hist[6]  # 90° y 270°
-            diagonals = hist[1] + hist[3] + hist[5] + hist[7]  # Diagonales
+            # Características de forma
+            circularity = 4 * np.pi * area / (perimeter * perimeter)
+            hull = cv2.convexHull(cnt)
+            hull_area = cv2.contourArea(hull)
+            if hull_area == 0:
+                return False
+            solidity = float(area) / hull_area
             
-            return (vertical_lines > 0.2 or horizontal_lines > 0.2 or diagonals > 0.3)
+            # 3. Análisis de densidad y distribución
+            pixel_density = np.sum(roi > 0) / roi.size
             
-        except Exception:
+            # 4. Análisis de simetría
+            roi_flipped = cv2.flip(roi, 1)
+            symmetry_score = np.sum(roi == roi_flipped) / roi.size
+            
+            # Criterios combinados para símbolos matemáticos
+            is_math_symbol = (
+                (0.1 < circularity < 0.9) and  # No demasiado circular ni irregular
+                (0.3 < solidity < 0.95) and    # Forma coherente pero no demasiado simple
+                (0.1 < pixel_density < 0.7) and # Densidad típica de símbolos
+                (symmetry_score > 0.7)          # Cierto grado de simetría
+            )
+            
+            return is_math_symbol
+            
+        except Exception as e:
+            logger.error(f"Error en análisis de símbolos: {e}")
             return False
 
 class LatexProcessor:
@@ -357,59 +600,140 @@ class FormulaDetector:
         self.buffer_size = 5
         self.last_processed_time = 0
         self.min_process_interval = 0.2
-        self.confidence_threshold = 0.35  # Reducido de 0.8 a 0.35
-        
-    def process_image(self, image):
-        """Solo detecta y extrae fórmulas matemáticas."""
+        self.confidence_threshold = 0.35
+        # Crear directorio temporal si no existe
+        self.temp_dir = os.path.join(os.path.dirname(__file__), 'temp')
+        os.makedirs(self.temp_dir, exist_ok=True)
+
+    def _save_debug_image(self, image, stage):
+        """Guarda imagen de debug en el directorio temporal."""
         try:
-            current_time = time.time()
-            if current_time - self.last_processed_time < self.min_process_interval:
-                return None
+            timestamp = time.strftime("%Y%m%d-%H%M%S")
+            filename = os.path.join(self.temp_dir, f"debug_{stage}_{timestamp}.png")
+            cv2.imwrite(filename, image)
+            logger.info(f"Imagen de debug guardada: {filename}")
+        except Exception as e:
+            logger.error(f"Error guardando imagen de debug: {e}")
+
+    def _clean_temp_dir(self):
+        """Limpia el directorio temporal."""
+        try:
+            files = glob.glob(os.path.join(self.temp_dir, '*'))
+            for f in files:
+                os.remove(f)
+            logger.info("Directorio temporal limpiado")
+        except Exception as e:
+            logger.error(f"Error limpiando directorio temporal: {e}")
+
+    def _calculate_math_score(self, image):
+        """Calcula un score de confianza para contenido matemático."""
+        try:
+            self._clean_temp_dir()  # Limpiar antes de empezar
+            
+            # Guardar imagen original para debug
+            self._save_debug_image(image, "original")
+            
+            # Preprocesar imagen para análisis
+            blur = cv2.GaussianBlur(image, (5,5), 0)
+            self._save_debug_image(blur, "blur")
+            
+            edges = cv2.Canny(blur, 30, 150)
+            self._save_debug_image(edges, "edges")
+            
+            contours, hierarchy = cv2.findContours(edges, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+            
+            if not contours:
+                return 0.0
+            
+            total_area = image.shape[0] * image.shape[1]
+            valid_symbols = 0
+            total_symbols = 0
+            
+            # Crear imagen para visualizar contornos
+            debug_contours = image.copy()
+            
+            # Analizar jerarquía de contornos
+            for i, cnt in enumerate(contours):
+                area = cv2.contourArea(cnt)
+                if area < total_area * 0.00001:  # Umbral más bajo
+                    continue
+                    
+                x, y, w, h = cv2.boundingRect(cnt)
+                aspect_ratio = float(w)/h if h > 0 else 0
                 
+                # Criterios más flexibles
+                if 0.05 < aspect_ratio < 15:  # Rango más amplio
+                    roi = image[y:y+h, x:x+w]
+                    total_symbols += 1
+                    
+                    if self.image_processor._check_symbol_features(roi):
+                        valid_symbols += 1
+                        # Dibujar rectángulo verde para símbolos válidos
+                        cv2.rectangle(debug_contours, (x,y), (x+w,y+h), (0,255,0), 2)
+                    else:
+                        # Dibujar rectángulo rojo para símbolos no válidos
+                        cv2.rectangle(debug_contours, (x,y), (x+w,y+h), (0,0,255), 1)
+            
+            # Guardar imagen con contornos detectados
+            self._save_debug_image(debug_contours, "detected_symbols")
+            
+            # Calcular score
+            if total_symbols == 0:
+                return 0.0
+                
+            symbol_ratio = valid_symbols / total_symbols
+            coverage = sum(cv2.contourArea(cnt) for cnt in contours) / total_area
+            
+            # Score combinado
+            score = (symbol_ratio * 0.7 + coverage * 0.3)
+            logger.info(f"Score matemático: {score:.4f} (símbolos: {valid_symbols}/{total_symbols}, coverage: {coverage:.4f})")
+            
+            # Guardar imagen final con score
+            score_img = debug_contours.copy()
+            cv2.putText(score_img, f"Score: {score:.4f}", (10, 30), 
+                       cv2.FONT_HERSHEY_SIMPLEX, 1, (0,255,0), 2)
+            self._save_debug_image(score_img, "final_score")
+            
+            return score
+            
+        except Exception as e:
+            logger.error(f"Error al calcular score matemático: {e}")
+            self._clean_temp_dir()  # Limpiar en caso de error
+            return 0.0
+
+    def process_image(self, image):
+        """Detecta y extrae fórmulas matemáticas."""
+        try:
             # Preprocesar imagen
             processed_image = self.image_processor.preprocess(image)
             if processed_image is None:
                 return None
-                
-            # Verificación de contenido matemático con umbral más bajo
-            if not self._verify_math_content(processed_image):
-                return None
-                
-            # Procesar con el modelo
-            pil_image = Image.fromarray(processed_image).convert("RGB")
-            pixel_values = self.model_manager.feature_extractor(
-                images=pil_image,
-                return_tensors="pt"
-            ).pixel_values.to(device)
+
+            # Detectar regiones con posibles fórmulas
+            regions = self._detect_formula_regions(processed_image)
             
-            attention_mask = torch.ones(
-                (pixel_values.shape[0], pixel_values.shape[2] * pixel_values.shape[3]),
-                device=device
-            )
-            
-            with torch.no_grad():
-                outputs = self.model_manager.model.generate(
-                    pixel_values,
-                    attention_mask=attention_mask,
-                    max_length=300,
-                    num_beams=2,          # Reducido de 3 a 2 para mayor velocidad
-                    length_penalty=0.5,    # Reducido de 0.6 a 0.5
-                    early_stopping=True
-                )
-                
-            latex_text = self.model_manager.tokenizer.batch_decode(
-                outputs,
-                skip_special_tokens=True
-            )[0]
-            
-            # Ser más permisivo con la validación de LaTeX
-            if not self.latex_processor.is_valid_latex(latex_text):
-                return None
-                
-            cleaned_latex = self.latex_processor.clean_latex(latex_text)
-            logger.info(f"Fórmula LaTeX detectada: {cleaned_latex}")
-            return cleaned_latex
-            
+            # Procesar cada región
+            formulas = []
+            for region in regions:
+                results = self.model_manager.process_formula(processed_image, region)
+                formulas.extend(results)
+
+            # Si no se encontraron regiones, procesar la imagen completa
+            if not formulas:
+                results = self.model_manager.process_formula(processed_image)
+                formulas.extend(results)
+
+            # Ordenar por confianza y eliminar duplicados
+            formulas.sort(key=lambda x: x['confidence'], reverse=True)
+            unique_formulas = []
+            seen = set()
+            for formula in formulas:
+                if formula['latex'] not in seen:
+                    seen.add(formula['latex'])
+                    unique_formulas.append(formula)
+
+            return unique_formulas if unique_formulas else None
+
         except Exception as e:
             logger.error(f"Error en procesamiento de imagen: {e}")
             return None
@@ -424,15 +748,26 @@ class FormulaDetector:
                 
             # Verificar características matemáticas
             math_score = self._calculate_math_score(image)
-            is_math = math_score >= self.confidence_threshold
+            
+            # Definir rangos válidos para scores matemáticos
+            MIN_SCORE = 0.01  # Score mínimo aceptable
+            MAX_SCORE = 0.99  # Score máximo aceptable
+            
+            # Verificar si el score está en el rango válido
+            is_math = MIN_SCORE <= math_score <= MAX_SCORE
             
             if is_math:
-                logger.info(f"Contenido matemático detectado con score: {math_score}")
+                logger.info(f"Contenido matemático detectado con score válido: {math_score}")
             else:
-                logger.info(f"No se detectó contenido matemático. Score: {math_score}")
-                
+                if math_score < MIN_SCORE:
+                    logger.info(f"Score muy bajo para ser fórmula: {math_score}")
+                elif math_score > MAX_SCORE:
+                    logger.info(f"Score demasiado alto, posible falso positivo: {math_score}")
+                else:
+                    logger.info(f"No se detectó contenido matemático. Score: {math_score}")
+                    
             return is_math
-            
+                
         except Exception as e:
             logger.error(f"Error en verificación de contenido: {e}")
             return False
@@ -442,39 +777,6 @@ class FormulaDetector:
         # Aquí puedes implementar un detector de personas simple
         # Por ahora, usaremos una implementación básica
         return False
-
-    def _calculate_math_score(self, image):
-        """Calcula un score de confianza para contenido matemático."""
-        try:
-            edges = cv2.Canny(image, 50, 150)  # Reducidos los umbrales de detección de bordes
-            contours, _ = cv2.findContours(edges, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-            
-            math_indicators = 0
-            total_area = image.shape[0] * image.shape[1]
-            valid_symbols = 0
-            
-            for cnt in contours:
-                area = cv2.contourArea(cnt)
-                # Reducir el umbral de área mínima
-                if area < total_area * 0.00005:  # Cambiado de 0.0001 a 0.00005
-                    continue
-                    
-                x, y, w, h = cv2.boundingRect(cnt)
-                aspect_ratio = float(w)/h if h > 0 else 0
-                
-                # Ampliar el rango de proporciones aceptables
-                if 0.1 < aspect_ratio < 10:  # Cambiado de 0.2-5 a 0.1-10
-                    roi = image[y:y+h, x:x+w]
-                    if self.image_processor._check_symbol_features(roi):
-                        valid_symbols += 1
-            
-            score = valid_symbols / max(len(contours), 1)
-            logger.info(f"Score matemático calculado: {score}")
-            return score
-            
-        except Exception as e:
-            logger.error(f"Error al calcular score matemático: {e}")
-            return 0.0
 
     def render_latex(self, latex_text):
         """Renderiza fórmula LaTeX a imagen."""

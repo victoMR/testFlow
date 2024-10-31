@@ -6,3 +6,7 @@
 
 /frontend
 
+# Archivos temporales de procesamiento
+backend/ai/temp/*
+!backend/ai/temp/.gitkeep
+

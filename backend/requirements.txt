@@ -72,7 +72,7 @@ txaio==23.1.1
 typing_extensions==4.12.2
 tzdata==2024.2
 urllib3==2.2.3
-uvicorn==0.31.0
+uvicorn>=0.15.0
 wheel==0.44.0
 whitenoise==6.7.0
 zope.interface==7.0.3

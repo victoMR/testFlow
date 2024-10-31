@@ -1,0 +1,21 @@
+[Unit]
+Description=gunicorn daemon
+After=network.target
+
+[Service]
+User=ubuntu
+Group=www-data
+WorkingDirectory=/home/ubuntu/testFlow/backend
+ExecStart=/home/ubuntu/testFlow/venv/bin/uvicorn \
+          testflow.asgi:application \
+          --workers 3 \
+          --host 0.0.0.0 \
+          --port 8000 \
+          --log-level info \
+          --access-log
+Restart=always
+RestartSec=5
+Environment=DJANGO_SETTINGS_MODULE=testflow.settings
+
+[Install]
+WantedBy=multi-user.target

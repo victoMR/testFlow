@@ -1,4 +1,8 @@
-/venv
+# Logs
+/var/log/userdata.log
+
+# Entorno virtual
+venv/
 
 /certificate.pem
 
